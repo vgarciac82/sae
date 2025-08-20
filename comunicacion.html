@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Comunicación — Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- AdminLTE + Bootstrap + FontAwesome + DataTables (CDN) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/datatables.net-bs4@1.13.6/css/dataTables.bootstrap4.min.css">
+    <style>
+        .chat-wrapper {
+            display: flex;
+            gap: 1rem;
+            min-height: 420px;
+        }
+
+        .chat-list {
+            width: 320px;
+            max-height: 520px;
+            overflow: auto;
+        }
+
+        .chat-list .list-group-item {
+            cursor: pointer;
+        }
+
+        .chat-window {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #dee2e6;
+            border-radius: .25rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow: auto;
+            padding: 1rem;
+            background: #f8f9fa;
+        }
+
+        .msg {
+            max-width: 75%;
+            margin-bottom: .5rem;
+            padding: .5rem .75rem;
+            border-radius: .75rem;
+        }
+
+        .msg.me {
+            margin-left: auto;
+            background: #d1ecf1;
+        }
+
+        .msg.other {
+            margin-right: auto;
+            background: #fff;
+            border: 1px solid #e2e3e5;
+        }
+
+        .msg .meta {
+            font-size: .75rem;
+            color: #6c757d;
+        }
+
+        .chat-input {
+            padding: .75rem;
+            border-top: 1px solid #dee2e6;
+            background: #fff;
+        }
+
+        .small-muted {
+            font-size: .85rem;
+            color: #6c757d;
+        }
+
+        .badge-on {
+            background: #28a745;
+        }
+
+        .badge-off {
+            background: #6c757d;
+        }
+
+        .table-sm td,
+        .table-sm th {
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body class="hold-transition">
+
+    <section class="content pt-3">
+        <div class="container-fluid">
+            <div class="card card-outline card-primary">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0"><i class="fas fa-envelope mr-2"></i>Comunicación</h3>
+                    <ul class="nav nav-pills">
+                        <li class="nav-item"><a class="nav-link active" href="#tab-bandeja" data-toggle="tab"><i
+                                    class="far fa-comments mr-1"></i>Bandeja</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#tab-difusion" data-toggle="tab"><i
+                                    class="fas fa-bullhorn mr-1"></i>Difusión</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#tab-plantillas" data-toggle="tab"><i
+                                    class="far fa-file-alt mr-1"></i>Plantillas</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#tab-programados" data-toggle="tab"><i
+                                    class="far fa-clock mr-1"></i>Programados</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#tab-bitacora" data-toggle="tab"><i
+                                    class="fas fa-clipboard-list mr-1"></i>Bitácora / Métricas</a></li>
+                    </ul>
+                </div>
+
+                <div class="card-body">
+                    <div class="tab-content">
+
+                        <!-- BANDEJA -->
+                        <div class="tab-pane active" id="tab-bandeja">
+                            <div class="chat-wrapper">
+                                <div class="chat-list">
+                                    <div class="input-group input-group-sm mb-2">
+                                        <input type="text" id="txtBuscarChat" class="form-control"
+                                            placeholder="Buscar alumno/profesor/grupo...">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-secondary" id="btnBuscarChat"><i
+                                                    class="fas fa-search"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="list-group" id="lstConversaciones"><!-- dinámico --></div>
+                                    <p class="small-muted mt-2 mb-0">
+                                        Mensajería interna (simulada). Los adjuntos se muestran como enlaces mock.
+                                    </p>
+                                </div>
+
+                                <div class="chat-window">
+                                    <div class="p-2 border-bottom d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong id="lblChatTitulo">Selecciona una conversación</strong><br>
+                                            <span id="lblChatSub" class="small-muted"></span>
+                                        </div>
+                                        <div>
+                                            <span class="badge badge-on" id="badgeEstadoChat">Activo</span>
+                                        </div>
+                                    </div>
+                                    <div class="chat-messages" id="chatMessages"><!-- mensajes --></div>
+                                    <div class="chat-input">
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" id="txtMsg" class="form-control"
+                                                placeholder="Escribe un mensaje...">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-secondary" id="btnAdjuntar"><i
+                                                        class="fas fa-paperclip"></i></button>
+                                                <button class="btn btn-primary" id="btnEnviarMsg"><i
+                                                        class="fas fa-paper-plane mr-1"></i>Enviar</button>
+                                            </div>
+                                        </div>
+                                        <div id="adjuntosPreview" class="small-muted mt-1"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DIFUSIÓN -->
+                        <div class="tab-pane" id="tab-difusion">
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="card card-light">
+                                        <div class="card-header py-2"><strong><i
+                                                    class="fas fa-sliders-h mr-1"></i>Configurar envío</strong></div>
+                                        <div class="card-body">
+                                            <div class="form-row">
+                                                <div class="form-group col-md-4">
+                                                    <label>Canal</label>
+                                                    <select id="difCanal" class="form-control">
+                                                        <option value="whatsapp">WhatsApp (simulado)</option>
+                                                        <option value="wecom">WeCom (simulado)</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col-md-4">
+                                                    <label>Audiencia</label>
+                                                    <select id="difAudiencia" class="form-control">
+                                                        <option value="todos">Todos</option>
+                                                        <option value="grupo">Por grupo</option>
+                                                        <option value="rol">Por rol</option>
+                                                        <option value="individual">Individual</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col-md-4 d-none" id="wrapGrupo">
+                                                    <label>Grupo</label>
+                                                    <select id="difGrupo" class="form-control"></select>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-row">
+                                                <div class="form-group col-md-4 d-none" id="wrapRol">
+                                                    <label>Rol</label>
+                                                    <select id="difRol" class="form-control">
+                                                        <option>Alumno</option>
+                                                        <option>Profesor</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col-md-8 d-none" id="wrapIndividual">
+                                                    <label>Destinatario</label>
+                                                    <select id="difDestinatario" class="form-control"></select>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-row">
+                                                <div class="form-group col-md-6">
+                                                    <label>Plantilla</label>
+                                                    <select id="difPlantilla" class="form-control"></select>
+                                                </div>
+                                                <div class="form-group col-md-6">
+                                                    <label>Vista previa</label>
+                                                    <button class="btn btn-outline-info btn-block" id="btnPreview"><i
+                                                            class="far fa-eye mr-1"></i>Previsualizar</button>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label>Mensaje generado (editable)</label>
+                                                <textarea id="difMensaje" class="form-control" rows="4"
+                                                    placeholder="El mensaje final aparecerá aquí..."></textarea>
+                                                <p class="small-muted mt-1 mb-0">Variables soportadas:
+                                                    <code>{{nombre}}</code>, <code>{{grupo}}</code>,
+                                                    <code>{{fecha}}</code>, <code>{{liga_factura}}</code></p>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <button class="btn btn-success" id="btnEnviar"><i
+                                                    class="fas fa-paper-plane mr-1"></i>Enviar ahora</button>
+                                            <button class="btn btn-outline-primary" id="btnProgramar"><i
+                                                    class="far fa-clock mr-1"></i>Programar</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-5">
+                                    <div class="card card-light">
+                                        <div class="card-header py-2"><strong><i
+                                                    class="fas fa-info-circle mr-1"></i>Resumen</strong></div>
+                                        <div class="card-body">
+                                            <ul class="list-unstyled mb-0" id="difResumen"><!-- dinámico --></ul>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-secondary">
+                                        <i class="fas fa-shield-alt mr-1"></i> Envíos externos requieren
+                                        <strong>consentimiento</strong> (opt-in). Si no lo hay, el envío se bloquea y se
+                                        registra en bitácora.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PLANTILLAS -->
+                        <div class="tab-pane" id="tab-plantillas">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="mb-0">Plantillas</h5>
+                                <button class="btn btn-primary btn-sm" id="btnNuevaPlantilla"><i
+                                        class="fas fa-plus mr-1"></i>Nueva plantilla</button>
+                            </div>
+                            <table id="tblPlantillas" class="table table-sm table-striped table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Canal sugerido</th>
+                                        <th>Contenido</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                        <!-- PROGRAMADOS -->
+                        <div class="tab-pane" id="tab-programados">
+                            <table id="tblProgramados" class="table table-sm table-striped table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Fecha/Hora</th>
+                                        <th>Canal</th>
+                                        <th>Audiencia</th>
+                                        <th>Plantilla</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <p class="small-muted mb-0">Scheduler simulado para demo. No se ejecutan envíos reales.</p>
+                        </div>
+
+                        <!-- BITÁCORA / MÉTRICAS -->
+                        <div class="tab-pane" id="tab-bitacora">
+                            <div class="row">
+                                <div class="col-sm-6 col-md-3">
+                                    <div class="small-box bg-info">
+                                        <div class="inner">
+                                            <h3 id="mEnv">0</h3>
+                                            <p>Enviados</p>
+                                        </div>
+                                        <div class="icon"><i class="fas fa-paper-plane"></i></div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-3">
+                                    <div class="small-box bg-success">
+                                        <div class="inner">
+                                            <h3 id="mOk">0</h3>
+                                            <p>Entregados (mock)</p>
+                                        </div>
+                                        <div class="icon"><i class="fas fa-check-circle"></i></div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-3">
+                                    <div class="small-box bg-warning">
+                                        <div class="inner">
+                                            <h3 id="mBlock">0</h3>
+                                            <p>Bloqueados por opt-in</p>
+                                        </div>
+                                        <div class="icon"><i class="fas fa-user-shield"></i></div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-3">
+                                    <div class="small-box bg-danger">
+                                        <div class="inner">
+                                            <h3 id="mErr">0</h3>
+                                            <p>Errores (mock)</p>
+                                        </div>
+                                        <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <table id="tblBitacora" class="table table-sm table-striped table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Fecha/Hora</th>
+                                        <th>Canal</th>
+                                        <th>Destinatario</th>
+                                        <th>Audiencia</th>
+                                        <th>Estatus</th>
+                                        <th>Detalle</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODALES -->
+    <div class="modal fade" id="modalPlantilla" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><span id="tituloPlantilla">Nueva plantilla</span></h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <form id="frmPlantilla">
+                        <div class="form-row">
+                            <div class="form-group col-md-5">
+                                <label>Nombre</label>
+                                <input type="text" class="form-control" id="plNombre" required>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Canal sugerido</label>
+                                <select id="plCanal" class="form-control">
+                                    <option>WhatsApp</option>
+                                    <option>WeCom</option>
+                                    <option>Indistinto</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label>Variables</label>
+                                <input class="form-control" value="{{nombre}}, {{grupo}}, {{fecha}}, {{liga_factura}}"
+                                    disabled>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Contenido</label>
+                            <textarea id="plContenido" class="form-control" rows="5"
+                                placeholder="Ej: Hola {{nombre}}, te recordamos tu clase del grupo {{grupo}} el día {{fecha}}."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button class="btn btn-primary" id="btnGuardarPlantilla">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalProgramar" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Programar campaña</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <form id="frmProgramar">
+                        <div class="form-row">
+                            <div class="form-group col-md-7">
+                                <label>Fecha y hora</label>
+                                <input type="datetime-local" id="progFecha" class="form-control">
+                            </div>
+                            <div class="form-group col-md-5">
+                                <label>Throttle (msg/min) (mock)</label>
+                                <input type="number" id="progThrottle" class="form-control" min="1" value="30">
+                            </div>
+                        </div>
+                        <p class="small-muted mb-0">Nota: El programado es simulado y solo aparecerá en la tabla de
+                            Programados.</p>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" id="btnConfirmarProgramacion">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datatables.net-bs4@1.13.6/js/dataTables.bootstrap4.min.js"></script>
+
+    <script>
+        // ==============================
+        // Mock Data
+        // ==============================
+        const grupos = [
+            { id: 'G-A1-VE', nombre: 'Chino A1 Sábado 10-12' },
+            { id: 'G-B2-NOC', nombre: 'Chino B2 Mar/Jue 19-20' }
+        ];
+
+        const contactos = [
+            // Alumnos
+            { id: 1, nombre: 'Carlos López', rol: 'Alumno', grupoId: 'G-A1-VE', telefono: '521555000001', whatsapp: true, wecom: false, optIn: true },
+            { id: 2, nombre: 'María Ruiz', rol: 'Alumno', grupoId: 'G-A1-VE', telefono: '521555000002', whatsapp: true, wecom: true, optIn: true },
+            { id: 3, nombre: 'José Hernández', rol: 'Alumno', grupoId: 'G-B2-NOC', telefono: '521555000003', whatsapp: true, wecom: false, optIn: false },
+            // Profesores
+            { id: 10, nombre: 'Ana Gómez', rol: 'Profesor', grupoId: 'G-B2-NOC', telefono: '521555000010', whatsapp: true, wecom: true, optIn: true },
+            { id: 11, nombre: 'Luis Torres', rol: 'Profesor', grupoId: 'G-A1-VE', telefono: '521555000011', whatsapp: true, wecom: false, optIn: true },
+        ];
+
+        let plantillas = [
+            { id: 1, nombre: 'Recordatorio de clase', canal: 'WhatsApp', contenido: 'Hola {{nombre}}, recuerda tu clase del grupo {{grupo}} el día {{fecha}}.' },
+            { id: 2, nombre: 'Aviso de pago', canal: 'Indistinto', contenido: 'Hola {{nombre}}, tu factura está disponible: {{liga_factura}}.' }
+        ];
+
+        let conversaciones = [
+            {
+                id: 'C1', titulo: 'Carlos López (A1)', sub: 'Alumno • G-A1-VE', msgs: [
+                    { me: false, txt: 'Hola, ¿puedo reponer la clase?', ts: '08:10' },
+                    { me: true, txt: 'Claro Carlos, te paso opciones por aquí.', ts: '08:12' }
+                ]
+            },
+            {
+                id: 'C2', titulo: 'Grupo B2 (Mar/Jue)', sub: 'Grupo • G-B2-NOC', msgs: [
+                    { me: false, txt: 'Profe, ¿mañana hay tarea?', ts: '09:00' },
+                    { me: true, txt: 'Sí, repasar vocabulario de la lección 3.', ts: '09:02' }
+                ]
+            },
+            {
+                id: 'C3', titulo: 'Ana Gómez (Profa.)', sub: 'Profesor • G-B2-NOC', msgs: [
+                    { me: true, txt: 'Profa. Ana, le confirmo el horario del jueves.', ts: '10:20' }
+                ]
+            }
+        ];
+
+        let programados = [];
+        let bitacora = []; // {ts, canal, destinatario, audiencia, estatus, detalle}
+
+        const langES = {
+            sProcessing: "Procesando...", sLengthMenu: "Mostrar _MENU_ registros",
+            sZeroRecords: "No se encontraron resultados", sEmptyTable: "Sin datos disponibles",
+            sInfo: "Mostrando _START_ a _END_ de _TOTAL_", sInfoEmpty: "Mostrando 0 a 0 de 0",
+            sInfoFiltered: "(filtrado de _MAX_ totales)", sSearch: "Buscar:",
+            oPaginate: { sFirst: "Primero", sLast: "Último", sNext: "Siguiente", sPrevious: "Anterior" }
+        };
+
+        // ==============================
+        // Utilidades
+        // ==============================
+        function nowTS() {
+            const d = new Date();
+            return d.toLocaleString();
+        }
+        function replacer(template, persona, grupoObj) {
+            const fecha = new Date().toLocaleDateString();
+            return template
+                .replaceAll('{{nombre}}', persona?.nombre || '')
+                .replaceAll('{{grupo}}', grupoObj?.nombre || '')
+                .replaceAll('{{fecha}}', fecha)
+                .replaceAll('{{liga_factura}}', 'https://example.demo/factura/123'); // mock
+        }
+        function byId(id) { return document.getElementById(id); }
+        function renderResumen(aud, canal, plantilla, msg, targetList) {
+            const ul = byId('difResumen'); ul.innerHTML = '';
+            const li = (k, v) => `<li><strong>${k}:</strong> ${v}</li>`;
+            ul.insertAdjacentHTML('beforeend', li('Canal', canal.toUpperCase()));
+            ul.insertAdjacentHTML('beforeend', li('Audiencia', aud.toUpperCase()));
+            ul.insertAdjacentHTML('beforeend', li('Plantilla', plantilla ? plantilla.nombre : '—'));
+            ul.insertAdjacentHTML('beforeend', li('Destinatarios', targetList.length));
+            ul.insertAdjacentHTML('beforeend', li('Mensaje', msg ? msg.substring(0, 120) + '…' : '—'));
+        }
+        function actualizarMetricas() {
+            byId('mEnv').textContent = bitacora.filter(b => b.estatus === 'ENVIADO').length;
+            byId('mOk').textContent = bitacora.filter(b => b.estatus === 'OK').length;      // mock
+            byId('mBlock').textContent = bitacora.filter(b => b.estatus === 'BLOQUEADO').length;
+            byId('mErr').textContent = bitacora.filter(b => b.estatus === 'ERROR').length;
+        }
+
+        // ==============================
+        // BANDEJA
+        // ==============================
+        let chatActual = null;
+
+        function renderConversaciones(list = conversaciones) {
+            const cont = byId('lstConversaciones'); cont.innerHTML = '';
+            list.forEach(c => {
+                cont.insertAdjacentHTML('beforeend', `
+      <a class="list-group-item list-group-item-action" data-id="${c.id}">
+        <div class="d-flex w-100 justify-content-between">
+          <h6 class="mb-1">${c.titulo}</h6>
+          <small class="text-muted">${c.msgs?.[c.msgs.length - 1]?.ts || ''}</small>
+        </div>
+        <p class="mb-1 small">${c.msgs?.[c.msgs.length - 1]?.txt || ''}</p>
+        <small class="text-muted">${c.sub}</small>
+      </a>`);
+            });
+        }
+        function openChat(id) {
+            const c = conversaciones.find(x => x.id === id);
+            if (!c) return;
+            chatActual = c;
+            byId('lblChatTitulo').textContent = c.titulo;
+            byId('lblChatSub').textContent = c.sub;
+            const box = byId('chatMessages'); box.innerHTML = '';
+            c.msgs.forEach(m => {
+                box.insertAdjacentHTML('beforeend', `
+      <div class="msg ${m.me ? 'me' : 'other'}">
+        <div>${m.txt}</div>
+        <div class="meta text-right">${m.ts}</div>
+      </div>`);
+            });
+            box.scrollTop = box.scrollHeight;
+        }
+        function pushMsg(txt, me = true) {
+            if (!chatActual) return;
+            const ts = new Date().toLocaleTimeString();
+            chatActual.msgs.push({ me, txt, ts });
+            openChat(chatActual.id);
+        }
+        function adjuntoMock() {
+            return `<a href="#" onclick="return false"><i class="far fa-file mr-1"></i>adjunto_${Math.floor(Math.random() * 999)}.pdf</a>`;
+        }
+
+        // ==============================
+        // DIFUSIÓN
+        // ==============================
+        let dtProgramados, dtBitacora, dtPlantillas;
+
+        function cargarSelectsDifusion() {
+            // Grupo
+            const selG = byId('difGrupo'); selG.innerHTML = '';
+            grupos.forEach(g => selG.insertAdjacentHTML('beforeend', `<option value="${g.id}">${g.nombre}</option>`));
+            // Plantillas
+            const selP = byId('difPlantilla'); selP.innerHTML = '';
+            plantillas.forEach(p => selP.insertAdjacentHTML('beforeend', `<option value="${p.id}">${p.nombre}</option>`));
+            // Destinatarios individuales
+            const selI = byId('difDestinatario'); selI.innerHTML = '';
+            contactos.forEach(c => selI.insertAdjacentHTML('beforeend', `<option value="${c.id}">${c.nombre} (${c.rol})</option>`));
+        }
+        function getAudienciaList(aud) {
+            switch (aud) {
+                case 'todos': return contactos.slice();
+                case 'grupo': {
+                    const g = byId('difGrupo').value;
+                    return contactos.filter(c => c.grupoId === g);
+                }
+                case 'rol': {
+                    const r = byId('difRol').value;
+                    return contactos.filter(c => c.rol === r);
+                }
+                case 'individual': {
+                    const id = +byId('difDestinatario').value;
+                    return contactos.filter(c => c.id === id);
+                }
+            }
+            return [];
+        }
+        function getPlantillaSel() {
+            const id = +byId('difPlantilla').value;
+            return plantillas.find(p => p.id === id);
+        }
+        function buildPreview() {
+            const aud = byId('difAudiencia').value;
+            const canal = byId('difCanal').value;
+            const audienciaList = getAudienciaList(aud);
+            const plantilla = getPlantillaSel();
+            // Elegimos primer elemento para vista previa
+            const persona = audienciaList[0] || null;
+            const grupoObj = grupos.find(g => g.id === (persona?.grupoId || byId('difGrupo').value));
+            const msg = plantilla ? replacer(plantilla.contenido, persona, grupoObj) : '';
+            byId('difMensaje').value = msg;
+            renderResumen(aud, canal, plantilla, msg, audienciaList);
+            if (audienciaList.length === 0) {
+                Swal.fire('Sin destinatarios', 'Ajusta la audiencia para continuar.', 'info');
+            }
+        }
+        function enviarAhora() {
+            const canal = byId('difCanal').value;
+            const aud = byId('difAudiencia').value;
+            const plantilla = getPlantillaSel();
+            const baseMsg = byId('difMensaje').value.trim();
+            const list = getAudienciaList(aud);
+
+            if (list.length === 0) { Swal.fire('Sin destinatarios', 'Selecciona una audiencia válida.', 'info'); return; }
+            if (!baseMsg) { Swal.fire('Mensaje vacío', 'Genera o escribe un mensaje.', 'warning'); return; }
+
+            Swal.fire({
+                icon: 'question', title: 'Confirmar envío',
+                html: `Canal: <b>${canal.toUpperCase()}</b><br>Destinatarios: <b>${list.length}</b>`,
+                showCancelButton: true, confirmButtonText: 'Enviar'
+            }).then(res => {
+                if (!res.isConfirmed) return;
+                // Simulación de envío por cada destinatario
+                list.forEach(p => {
+                    const gObj = grupos.find(g => g.id === p.grupoId);
+                    const msg = plantilla ? replacer(plantilla.contenido, p, gObj) : baseMsg;
+                    let status = 'ENVIADO', det = 'OK';
+                    // Validar opt-in
+                    if (!p.optIn) { status = 'BLOQUEADO'; det = 'Sin consentimiento (opt-in)'; }
+                    // Validar canal
+                    if (canal === 'whatsapp' && !p.whatsapp) { status = 'BLOQUEADO'; det = 'No tiene WhatsApp'; }
+                    if (canal === 'wecom' && !p.wecom) { status = 'BLOQUEADO'; det = 'No está en WeCom'; }
+
+                    // Registrar en bitácora
+                    bitacora.unshift({
+                        ts: nowTS(),
+                        canal: canal.toUpperCase(),
+                        destinatario: p.nombre,
+                        audiencia: aud.toUpperCase(),
+                        estatus: status,
+                        detalle: det
+                    });
+
+                    // Si es WhatsApp y permitido, generamos línea "click-to-chat"
+                    if (canal === 'whatsapp' && status === 'ENVIADO') {
+                        const url = `https://wa.me/${p.telefono}?text=${encodeURIComponent(msg)}`;
+                        // Solo mostramos el link (no abre nada automáticamente)
+                        console.log('WA link:', url);
+                    }
+                });
+
+                dtBitacora.clear().rows.add(bitacora).draw(false);
+                actualizarMetricas();
+                Swal.fire('Listo', 'Envío simulado registrado en bitácora.', 'success');
+            });
+        }
+        function programarCampania() {
+            $('#modalProgramar').modal('show');
+        }
+        function confirmarProgramacion() {
+            const dt = byId('progFecha').value;
+            const th = +byId('progThrottle').value || 30;
+            const canal = byId('difCanal').value;
+            const aud = byId('difAudiencia').value;
+            const plantilla = getPlantillaSel();
+
+            if (!dt) { Swal.fire('Falta fecha/hora', 'Indica cuándo se programará.', 'info'); return; }
+
+            programados.unshift({
+                ts: dt.replace('T', ' '),
+                canal: canal.toUpperCase(),
+                audiencia: aud.toUpperCase(),
+                plantilla: plantilla ? plantilla.nombre : '(Libre)',
+                throttle: th
+            });
+            dtProgramados.clear().rows.add(programados).draw(false);
+            $('#modalProgramar').modal('hide');
+            Swal.fire('Programado', 'La campaña quedó en Programados (simulación).', 'success');
+        }
+
+        // ==============================
+        // PLANTILLAS (CRUD)
+        /// ============================
+        let editPlantillaIndex = null;
+        function abrirModalPlantilla(idx = null) {
+            editPlantillaIndex = idx;
+            byId('tituloPlantilla').textContent = idx == null ? 'Nueva plantilla' : 'Editar plantilla';
+            if (idx == null) {
+                byId('frmPlantilla').reset();
+                byId('plContenido').value = '';
+            } else {
+                const p = plantillas[idx];
+                byId('plNombre').value = p.nombre;
+                byId('plCanal').value = p.canal;
+                byId('plContenido').value = p.contenido;
+            }
+            $('#modalPlantilla').modal('show');
+        }
+        function guardarPlantilla() {
+            const nombre = byId('plNombre').value.trim();
+            const canal = byId('plCanal').value.trim();
+            const contenido = byId('plContenido').value.trim();
+            if (!nombre || !contenido) { Swal.fire('Campos requeridos', 'Nombre y Contenido son obligatorios.', 'info'); return; }
+            const nuevo = { id: Date.now(), nombre, canal, contenido };
+            if (editPlantillaIndex == null) {
+                plantillas.unshift(nuevo);
+            } else {
+                plantillas[editPlantillaIndex] = { ...plantillas[editPlantillaIndex], nombre, canal, contenido };
+            }
+            dtPlantillas.clear().rows.add(plantillas).draw(false);
+            cargarSelectsDifusion();
+            $('#modalPlantilla').modal('hide');
+        }
+
+        // ==============================
+        // INIT
+        // ==============================
+        $(function () {
+            // Bandeja
+            renderConversaciones();
+            $('#lstConversaciones').on('click', '.list-group-item', function () {
+                openChat($(this).data('id'));
+            });
+            $('#btnBuscarChat').on('click', function () {
+                const q = $('#txtBuscarChat').val().toLowerCase();
+                const f = conversaciones.filter(c => (c.titulo + ' ' + c.sub).toLowerCase().includes(q));
+                renderConversaciones(f);
+            });
+            $('#btnAdjuntar').on('click', function () {
+                $('#adjuntosPreview').append(($('#adjuntosPreview').html() ? ' • ' : '') + adjuntoMock());
+            });
+            $('#btnEnviarMsg').on('click', function () {
+                const txt = $('#txtMsg').val().trim();
+                if (!chatActual) { Swal.fire('Selecciona una conversación', '', 'info'); return; }
+                if (!txt && !$('#adjuntosPreview').text()) { Swal.fire('Mensaje vacío', '', 'info'); return; }
+                const full = [txt, $('#adjuntosPreview').text() ? '(Adj: ' + $('#adjuntosPreview').text() + ')' : ''].filter(Boolean).join(' ');
+                pushMsg(full, true);
+                $('#txtMsg').val(''); $('#adjuntosPreview').html('');
+            });
+
+            // DataTables Plantillas
+            dtPlantillas = $('#tblPlantillas').DataTable({
+                data: plantillas,
+                columns: [
+                    { data: 'nombre' },
+                    { data: 'canal' },
+                    { data: 'contenido', render: c => `<span title="${c.replace(/"/g, '&quot;')}">${c.length > 80 ? c.substring(0, 80) + '…' : c}</span>` },
+                    {
+                        data: null, orderable: false, render: (_, __, row, meta) => `
+        <div class="btn-group btn-group-sm">
+          <button class="btn btn-outline-info btnEditPl" data-index="${meta.row}"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-outline-danger btnDelPl" data-index="${meta.row}"><i class="fas fa-trash"></i></button>
+        </div>`}
+                ],
+                language: langES
+            });
+            $('#btnNuevaPlantilla').on('click', () => abrirModalPlantilla());
+            $('#tblPlantillas').on('click', '.btnEditPl', function () { abrirModalPlantilla(+$(this).data('index')); });
+            $('#tblPlantillas').on('click', '.btnDelPl', function () {
+                const i = +$(this).data('index'); const p = plantillas[i];
+                Swal.fire({ icon: 'warning', title: 'Eliminar plantilla', html: `¿Eliminar <b>${p.nombre}</b>?`, showCancelButton: true, confirmButtonText: 'Eliminar' })
+                    .then(r => { if (r.isConfirmed) { plantillas.splice(i, 1); dtPlantillas.clear().rows.add(plantillas).draw(false); cargarSelectsDifusion(); Swal.fire('Eliminada', '', 'success'); } });
+            });
+            $('#btnGuardarPlantilla').on('click', guardarPlantilla);
+
+            // Programados + Bitácora
+            dtProgramados = $('#tblProgramados').DataTable({
+                data: programados,
+                columns: [
+                    { data: 'ts' },
+                    { data: 'canal' },
+                    { data: 'audiencia' },
+                    { data: 'plantilla' },
+                    {
+                        data: null, orderable: false, render: (_, __, row, meta) => `
+        <div class="btn-group btn-group-sm">
+          <button class="btn btn-outline-danger btnDelProg" data-index="${meta.row}"><i class="fas fa-trash"></i></button>
+        </div>`}
+                ],
+                language: langES
+            });
+            $('#tblProgramados').on('click', '.btnDelProg', function () {
+                const i = +$(this).data('index');
+                programados.splice(i, 1);
+                dtProgramados.clear().rows.add(programados).draw(false);
+            });
+
+            dtBitacora = $('#tblBitacora').DataTable({
+                data: bitacora,
+                columns: [
+                    { data: 'ts' }, { data: 'canal' }, { data: 'destinatario' }, { data: 'audiencia' }, { data: 'estatus' }, { data: 'detalle' }
+                ],
+                language: langES
+            });
+
+            // Difusión: selects y handlers
+            cargarSelectsDifusion();
+            $('#difAudiencia').on('change', function () {
+                const v = this.value;
+                $('#wrapGrupo').toggleClass('d-none', v !== 'grupo');
+                $('#wrapRol').toggleClass('d-none', v !== 'rol');
+                $('#wrapIndividual').toggleClass('d-none', v !== 'individual');
+            });
+            $('#btnPreview').on('click', buildPreview);
+            $('#btnEnviar').on('click', enviarAhora);
+            $('#btnProgramar').on('click', programarCampania);
+            $('#btnConfirmarProgramacion').on('click', confirmarProgramacion);
+
+            // Preview inicial
+            buildPreview();
+            actualizarMetricas();
+        });
+    </script>
+
+</body>
+
+</html>
