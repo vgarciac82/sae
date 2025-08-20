@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Estudiantes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- AdminLTE / Bootstrap / FA -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+  <!-- DataTables -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-dt@1.13.8/css/jquery.dataTables.min.css">
+  <style>
+    /* ====== Toolbar responsive ====== */
+    .students-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      align-items: center;
+    }
+    .students-toolbar .form-control {
+      min-width: 200px; /* evita encimarse */
+    }
+    .students-toolbar .search-wrap {
+      flex: 1 1 260px; /* que crezca y reduzca con el espacio */
+      min-width: 240px;
+    }
+    .students-toolbar .btn, .students-toolbar .dropdown-toggle {
+      white-space: nowrap;
+    }
+    /* Tarjetas: separación y aspecto */
+    #vistaTarjetas .card { border-radius: .6rem; }
+    #vistaTarjetas .card-body img { width:64px; height:64px; object-fit:cover; }
+    /* Badges */
+    .badge.ACTIVO   { background:#28a745; }
+    .badge.INACTIVO { background:#6c757d; }
+    .badge.BAJA     { background:#dc3545; }
+    /* Botonera de acciones compacta */
+    .btn-group .btn { padding: .25rem .5rem; }
+  </style>
+</head>
+<body class="hold-transition">
+
+<div class="content-header">
+  <div class="container-fluid">
+    <h1 class="m-0 mb-3"><i class="fas fa-user-graduate mr-2"></i>Estudiantes</h1>
+
+    <!-- Toolbar -->
+    <div class="card">
+      <div class="card-body students-toolbar">
+        <div class="input-group search-wrap">
+          <input id="txtBuscar" type="text" class="form-control" placeholder="Buscar por nombre, email o teléfono">
+          <div class="input-group-append"><span class="input-group-text"><i class="fas fa-search"></i></span></div>
+        </div>
+
+        <select id="filtroGrupo" class="form-control" title="Grupo"></select>
+
+        <select id="filtroEstatus" class="form-control" title="Estatus">
+          <option value="">Todos los estatus</option>
+          <option value="ACTIVO">Activos</option>
+          <option value="INACTIVO">Inactivos</option>
+          <option value="BAJA">Bajas</option>
+        </select>
+
+        <button id="btnNuevoAlumno" class="btn btn-primary">
+          <i class="fas fa-user-plus mr-2"></i>Nuevo Alumno
+        </button>
+
+        <button id="btnToggleVista" class="btn btn-outline-secondary" data-view="cards" title="Ver como lista">
+          <i class="fas fa-list"></i>
+        </button>
+
+        <div class="btn-group">
+          <button type="button" class="btn btn-outline-info dropdown-toggle" data-toggle="dropdown">
+            <i class="fas fa-file-export mr-2"></i>Exportar
+          </button>
+          <div class="dropdown-menu dropdown-menu-right">
+            <a class="dropdown-item" href="#" id="expPdf"><i class="far fa-file-pdf mr-2"></i>PDF (Listado)</a>
+            <a class="dropdown-item" href="#" id="expXml"><i class="far fa-file-code mr-2"></i>XML (Padrón)</a>
+            <a class="dropdown-item" href="#" id="expWord"><i class="far fa-file-word mr-2"></i>Análisis (Word)</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /Toolbar -->
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <!-- Vista TARJETAS -->
+    <div id="vistaTarjetas" class="row" style="row-gap: 1rem;"></div>
+
+    <!-- Vista LISTA -->
+    <div id="vistaLista" class="card d-none">
+      <div class="card-body">
+        <table id="dtAlumnos" class="table table-striped table-bordered w-100"></table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MODAL: Importar desde Clase Muestra -->
+<div class="modal fade" id="modalImportar" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form id="frmImportar" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-file-import mr-2"></i>Importar desde Clase Muestra</h5>
+        <button class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>Clase muestra</label>
+            <select id="impClase" class="form-control">
+              <option value="">Selecciona…</option>
+            </select>
+          </div>
+          <div class="form-group col-md-6">
+            <label>Búsqueda (nombre/email/teléfono)</label>
+            <input id="impBuscar" class="form-control" placeholder="Ej. Mariana, 5512345678, user@mail.com">
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover" id="tblProspectos">
+            <thead class="thead-light">
+              <tr><th>Sel</th><th>Nombre</th><th>Email</th><th>Teléfono</th></tr>
+            </thead>
+            <tbody><!-- dinámico --></tbody>
+          </table>
+        </div>
+        <hr>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>Grupo de inscripción</label>
+            <select id="impGrupo" class="form-control"></select>
+          </div>
+          <div class="form-group col-md-6">
+            <label>Estatus</label>
+            <select id="impEstatus" class="form-control">
+              <option>ACTIVO</option>
+              <option>INACTIVO</option>
+            </select>
+          </div>
+        </div>
+        <small class="text-muted">Si no eliges grupo, se guardará como INACTIVO.</small>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary" type="submit">Importar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar -->
+<div class="modal fade" id="modalEditar" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="frmEditar" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Actualizar alumno</h5>
+        <button class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="ed_id">
+        <div class="form-group">
+          <label>Nombre completo</label>
+          <input id="ed_nombre" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input id="ed_email" type="email" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input id="ed_tel" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Grupo</label>
+          <select id="ed_grupo" class="form-control"></select>
+        </div>
+        <div class="form-group">
+          <label>Horario</label>
+          <input id="ed_horario" class="form-control" placeholder="Lun-Mié 09:00–10:00">
+        </div>
+        <div class="form-group">
+          <label>Estatus</label>
+          <select id="ed_status" class="form-control">
+            <option>ACTIVO</option><option>INACTIVO</option><option>BAJA</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">Cerrar</button>
+        <button class="btn btn-primary" type="submit">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Historial -->
+<div class="modal fade" id="modalHistorial" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-history mr-2"></i>Historial del alumno</h5>
+        <button class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <ul id="histList" class="list-group list-group-flush"><!-- dinámico --></ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JS: jQuery + Bootstrap + AdminLTE -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<!-- DataTables -->
+<script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.8/js/jquery.dataTables.min.js"></script>
+<!-- SweetAlert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Export: jsPDF + autotable + docx -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+
+<script>
+/* =======================
+   Datos DEMO
+======================= */
+const grupos = [
+  {id:'A1M1', nombre:'A1-M1', horario:'Lun-Mié 09:00–10:00', cupo:12},
+  {id:'B2T1', nombre:'B2-T1', horario:'Mar-Jue 10:00–11:00', cupo:15},
+  {id:'C1N1', nombre:'C1-N1', horario:'Sáb 09:00–11:00', cupo:10},
+  {id:'A2V1', nombre:'A2-V1', horario:'Vie 18:00–20:00', cupo:10}
+];
+
+let alumnos = [
+  {id:1, foto:'https://i.pravatar.cc/150?img=1',  nombre:'Emma J Parker',   grupo:'A1-M1', grupoId:'A1M1', horario:'Lun-Mié 09:00–10:00', status:'ACTIVO',   email:'emma@example.com',  tel:'555-111-1111', history:[['Alta','-']]},
+  {id:2, foto:'https://i.pravatar.cc/150?img=5',  nombre:'James M García',  grupo:'B2-T1', grupoId:'B2T1', horario:'Mar-Jue 10:00–11:00', status:'ACTIVO',   email:'james@example.com', tel:'555-111-2222', history:[['Alta','-']]},
+  {id:3, foto:'https://i.pravatar.cc/150?img=12', nombre:'Aarav M Sharma',  grupo:'A1-M1', grupoId:'A1M1', horario:'Lun-Mié 09:00–10:00', status:'INACTIVO', email:'aarav@example.com', tel:'555-111-3333', history:[['Alta','-'],['Inactivo','Motivo académico']]},
+  {id:4, foto:'https://i.pravatar.cc/150?img=22', nombre:'Bella L Carter',  grupo:'',      grupoId:'',     horario:'',                     status:'BAJA',     email:'bella@example.com', tel:'555-111-4444', history:[['Alta','-'],['Baja','Cambio de ciudad']]},
+  {id:5, foto:'https://i.pravatar.cc/150?img=31', nombre:'Oren H Shimon',   grupo:'C1-N1', grupoId:'C1N1', horario:'Sáb 09:00–11:00',      status:'ACTIVO',   email:'oren@example.com',  tel:'555-111-5555', history:[['Alta','-']]}
+];
+
+const clasesMuestra = [
+  {id:'CM-001', titulo:'Clase muestra A1', fecha:'2025-08-25 10:00', maestro:'Juan Pérez',
+    prospectos:[
+      {nombre:'Mariana Ruiz', email:'mariana@mail.com', tel:'5558880001'},
+      {nombre:'Luis Ávila',   email:'luis.avila@mail.com', tel:'5558880002'},
+      {nombre:'Ana López',    email:'alopez@mail.com', tel:'5558880003'}
+    ]
+  },
+  {id:'CM-002', titulo:'Clase muestra B2', fecha:'2025-08-27 18:00', maestro:'Ana Gómez',
+    prospectos:[
+      {nombre:'Pedro Torres', email:'ptorres@mail.com', tel:'5558881001'},
+      {nombre:'Sofía Díaz',   email:'sofiad@mail.com',  tel:'5558881002'}
+    ]
+  }
+];
+
+/* =======================
+   Helpers UI
+======================= */
+const $tarjetas = $('#vistaTarjetas');
+const $lista = $('#vistaLista');
+const $filtroGrupo = $('#filtroGrupo');
+const $filtroEstatus = $('#filtroEstatus');
+const $buscar = $('#txtBuscar');
+
+function gruposOptions($sel, includeTodos=true){
+  $sel.empty();
+  if(includeTodos) $sel.append('<option value="">Todos los grupos</option>');
+  grupos.forEach(g=>$sel.append(`<option value="${g.id}">${g.nombre}</option>`));
+}
+
+function statusBadge(s){
+  return `<span class="badge ${s}">${s}</span>`;
+}
+
+function accionesHtml(a){
+  let html = `<div class="btn-group">
+    <button class="btn btn-sm btn-outline-info mr-1 btn-hist" data-id="${a.id}" title="Historial"><i class="fas fa-history"></i></button>`;
+  if(a.status==='ACTIVO'){
+    html += `<button class="btn btn-sm btn-outline-warning mr-1 btn-baja" data-id="${a.id}" title="Registrar baja"><i class="fas fa-user-times"></i></button>
+             <button class="btn btn-sm btn-outline-primary mr-1 btn-cambiar" data-id="${a.id}" title="Cambiar grupo"><i class="fas fa-exchange-alt"></i></button>
+             <button class="btn btn-sm btn-outline-success mr-1 btn-editar" data-id="${a.id}" title="Actualizar"><i class="fas fa-edit"></i></button>`;
+  } else {
+    html += `<button class="btn btn-sm btn-outline-success mr-1 btn-reactivar" data-id="${a.id}" title="Reactivar"><i class="fas fa-user-check"></i></button>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+/* =======================
+   Render: TARJETAS
+======================= */
+function renderTarjetas(){
+  $tarjetas.empty();
+  const data = getFiltrados();
+  if(!data.length){
+    $tarjetas.append(`<div class="col-12"><div class="alert alert-light mb-0">Sin resultados.</div></div>`);
+    return;
+  }
+  data.forEach(a=>{
+    $tarjetas.append(`
+      <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+        <div class="card h-100">
+          <div class="card-body d-flex">
+            <img src="${a.foto||'https://via.placeholder.com/80'}" class="img-circle elevation-2 mr-3" alt="foto">
+            <div class="flex-grow-1">
+              <h5 class="card-title mb-1">${a.nombre}</h5>
+              <div class="text-muted small mb-1">
+                <i class="fas fa-users mr-1"></i>${a.grupo||'—'}
+                &nbsp; <i class="far fa-clock ml-2 mr-1"></i>${a.horario||'—'}
+              </div>
+              ${statusBadge(a.status)}
+            </div>
+          </div>
+          <div class="card-footer py-2">
+            ${accionesHtml(a)}
+          </div>
+        </div>
+      </div>
+    `);
+  });
+}
+
+/* =======================
+   Render: LISTA (DataTable)
+======================= */
+let dt;
+function renderTabla(){
+  const cols = [
+    {title:'Foto', data:'foto', orderable:false, render:(d)=>`<img src="${d||'https://via.placeholder.com/40'}" class="img-circle" style="width:40px;height:40px;object-fit:cover;">`},
+    {title:'Nombre', data:'nombre'},
+    {title:'Grupo', data:'grupo'},
+    {title:'Horario', data:'horario'},
+    {title:'Estatus', data:'status', render:(s)=>statusBadge(s)},
+    {title:'Acciones', data:null, orderable:false, render:(_,__,a)=>accionesHtml(a)}
+  ];
+
+  if(dt){ dt.destroy(); $('#dtAlumnos').empty(); }
+
+  dt = $('#dtAlumnos').DataTable({
+    language:{url:'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json'},
+    data: getFiltrados(),
+    columns: cols,
+    deferRender:true,
+    pageLength: 10,
+    dom: 'tip'
+  });
+
+  dt.search($buscar.val()||'').draw();
+}
+
+/* =======================
+   Filtros y dataset
+======================= */
+function getFiltrados(){
+  const g = $filtroGrupo.val();
+  const s = $filtroEstatus.val();
+  const q = ($buscar.val()||'').toLowerCase();
+  return alumnos.filter(a=>{
+    const okG = !g || a.grupoId===g;
+    const okS = !s || a.status===s;
+    const okQ = !q || [a.nombre, a.email, a.tel].join(' ').toLowerCase().includes(q);
+    return okG && okS && okQ;
+  }).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+}
+
+function getById(id){ return alumnos.find(a=>a.id===+id); }
+
+/* =======================
+   Acciones
+======================= */
+$(document).on('click','.btn-editar', function(){
+  const a = getById($(this).data('id'));
+  $('#ed_id').val(a.id);
+  $('#ed_nombre').val(a.nombre);
+  $('#ed_email').val(a.email||'');
+  $('#ed_tel').val(a.tel||'');
+  $('#ed_grupo').val(a.grupoId||'');
+  $('#ed_status').val(a.status);
+  $('#ed_horario').val(a.horario||'');
+  $('#modalEditar').modal('show');
+});
+
+$('#frmEditar').on('submit', function(e){
+  e.preventDefault();
+  const id = +$('#ed_id').val();
+  const idx = alumnos.findIndex(x=>x.id===id);
+  const gsel = $('#ed_grupo').val();
+  const g = grupos.find(x=>x.id===gsel);
+  alumnos[idx] = {
+    ...alumnos[idx],
+    nombre: $('#ed_nombre').val().trim(),
+    email: $('#ed_email').val().trim(),
+    tel: $('#ed_tel').val().trim(),
+    grupoId: g?g.id:'',
+    grupo: g?g.nombre:'',
+    horario: $('#ed_horario').val().trim(),
+    status: $('#ed_status').val()
+  };
+  alumnos[idx].history.unshift(['Actualización','Datos editados']);
+  $('#modalEditar').modal('hide');
+  refreshViews();
+  Swal.fire('Guardado','Alumno actualizado.','success');
+});
+
+$(document).on('click','.btn-baja', function(){
+  const id = $(this).data('id');
+  Swal.fire({
+    title:'Registrar baja',
+    input:'text', inputLabel:'Motivo', inputPlaceholder:'Opcional',
+    showCancelButton:true, confirmButtonText:'Confirmar', icon:'warning'
+  }).then(r=>{
+    if(r.isConfirmed){
+      const a = getById(id);
+      a.status='BAJA'; a.history.unshift(['Baja', r.value||'—']);
+      refreshViews(); Swal.fire('Listo','Baja registrada.','success');
+    }
+  });
+});
+
+$(document).on('click','.btn-reactivar', function(){
+  const id = $(this).data('id');
+  const opts = grupos.map(g=>`<option value="${g.id}">${g.nombre}</option>`).join('');
+  Swal.fire({
+    title:'Reactivar alumno',
+    html:`<div class="text-left"><label>Asignar grupo (opcional)</label>
+          <select id="rxGrupo" class="swal2-select"><option value="">— Ninguno —</option>${opts}</select></div>`,
+    showCancelButton:true, confirmButtonText:'Reactivar'
+  }).then(r=>{
+    if(r.isConfirmed){
+      const a = getById(id);
+      const gid = $('#rxGrupo').val();
+      const g = grupos.find(x=>x.id===gid);
+      a.status='ACTIVO';
+      if(g){ a.grupoId=g.id; a.grupo=g.nombre; a.horario=g.horario; }
+      a.history.unshift(['Reactivación', g?`Asignado a ${g.nombre}`:'Sin grupo']);
+      refreshViews(); Swal.fire('Reactivado','Alumno activo.','success');
+    }
+  });
+});
+
+$(document).on('click','.btn-cambiar', function(){
+  const id = $(this).data('id');
+  const a = getById(id);
+  const opts = grupos.map(g=>`<option value="${g.id}" ${g.id===a.grupoId?'selected':''}>${g.nombre}</option>`).join('');
+  Swal.fire({
+    title:'Cambiar de grupo',
+    html:`<div class="text-left"><label>Grupo</label>
+          <select id="cgGrupo" class="swal2-select">${opts}</select></div>`,
+    showCancelButton:true, confirmButtonText:'Cambiar'
+  }).then(r=>{
+    if(r.isConfirmed){
+      const gid = $('#cgGrupo').val(); const g = grupos.find(x=>x.id===gid);
+      a.grupoId=g.id; a.grupo=g.nombre; a.horario=g.horario;
+      a.history.unshift(['Cambio de grupo', `Ahora en ${g.nombre}`]);
+      refreshViews(); Swal.fire('Actualizado','Grupo cambiado.','success');
+    }
+  });
+});
+
+$(document).on('click','.btn-hist', function(){
+  const a = getById($(this).data('id'));
+  const html = a.history.map(h=>`<li class="list-group-item"><b>${h[0]}:</b> ${h[1]} <span class="text-muted small float-right">${new Date().toLocaleDateString()}</span></li>`).join('');
+  $('#histList').html(html || '<li class="list-group-item">Sin eventos</li>');
+  $('#modalHistorial').modal('show');
+});
+
+/* =======================
+   Importar desde Clase Muestra
+======================= */
+$('#btnNuevoAlumno').on('click', ()=>{
+  const $c = $('#impClase').empty().append(`<option value="">Selecciona…</option>`);
+  clasesMuestra.forEach(c=>$c.append(`<option value="${c.id}">${c.titulo} — ${c.fecha} — ${c.maestro}</option>`));
+  gruposOptions($('#impGrupo'), false);
+  $('#tblProspectos tbody').empty();
+  $('#impBuscar').val('');
+  $('#impEstatus').val('ACTIVO');
+  $('#modalImportar').modal('show');
+});
+
+$('#impClase, #impBuscar').on('input change', function(){
+  const id = $('#impClase').val(); const q = ($('#impBuscar').val()||'').toLowerCase();
+  const tbody = $('#tblProspectos tbody').empty();
+  if(!id) return;
+  const clase = clasesMuestra.find(x=>x.id===id);
+  clase.prospectos
+    .filter(p=>!q || [p.nombre,p.email,p.tel].join(' ').toLowerCase().includes(q))
+    .forEach((p,i)=>{
+      tbody.append(`<tr>
+        <td><input type="radio" name="prosSel" value="${i}"></td>
+        <td>${p.nombre}</td><td>${p.email||'—'}</td><td>${p.tel||'—'}</td>
+      </tr>`);
+    });
+});
+
+$('#frmImportar').on('submit', function(e){
+  e.preventDefault();
+  const clase = clasesMuestra.find(x=>x.id===$('#impClase').val());
+  if(!clase) return Swal.fire('Atención','Selecciona una clase muestra.','info');
+  const idx = $('input[name="prosSel"]:checked').val();
+  if(idx===undefined) return Swal.fire('Atención','Selecciona un prospecto.','info');
+
+  const p = clase.prospectos[idx];
+  if(alumnos.some(a=>a.email && p.email && a.email.toLowerCase()===p.email.toLowerCase())){
+    return Swal.fire('Duplicado','Ya existe un alumno con ese email.','error');
+  }
+  const gid = $('#impGrupo').val();
+  const g = grupos.find(x=>x.id===gid);
+  const nuevo = {
+    id: Math.max(0,...alumnos.map(a=>a.id))+1,
+    foto:'https://i.pravatar.cc/150?u='+encodeURIComponent(p.email||p.tel||p.nombre),
+    nombre:p.nombre, email:p.email||'', tel:p.tel||'',
+    grupoId: g?g.id:'', grupo: g?g.nombre:'', horario:g?g.horario:'',
+    status: $('#impEstatus').val() || (g?'ACTIVO':'INACTIVO'),
+    history: [['Alta desde clase muestra', clase.titulo]]
+  };
+  alumnos.push(nuevo);
+  $('#modalImportar').modal('hide');
+  refreshViews();
+  Swal.fire('Importado','Alumno creado correctamente.','success');
+});
+
+/* =======================
+   Exportaciones
+======================= */
+function currentData(){ return getFiltrados(); }
+
+$('#expPdf').on('click', function(e){
+  e.preventDefault();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const rows = currentData().map(a=>[a.nombre, a.grupo||'—', a.horario||'—', a.status]);
+  doc.text('Listado de Estudiantes', 14, 16);
+  doc.setFontSize(10);
+  doc.text(`Generado: ${new Date().toLocaleString()}`, 14, 22);
+  doc.autoTable({ head:[['Nombre','Grupo','Horario','Estatus']], body:rows, startY:26, styles:{fontSize:9} });
+  doc.save('estudiantes.pdf');
+});
+
+$('#expXml').on('click', function(e){
+  e.preventDefault();
+  const items = currentData().map(a=>`
+    <student id="${a.id}">
+      <fullName>${escapeXml(a.nombre)}</fullName>
+      <group id="${a.grupoId||''}">${escapeXml(a.grupo||'')}</group>
+      <schedule>${escapeXml(a.horario||'')}</schedule>
+      <status>${a.status}</status>
+      <email>${escapeXml(a.email||'')}</email>
+      <phone>${escapeXml(a.tel||'')}</phone>
+      <photoUrl>${escapeXml(a.foto||'')}</photoUrl>
+    </student>`).join('');
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<students exportedAt="${new Date().toISOString()}">\n${items}\n</students>`;
+  downloadBlob(new Blob([xml], {type:'application/xml'}), 'estudiantes.xml');
+});
+
+$('#expWord').on('click', async function(e){
+  e.preventDefault();
+  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, HeadingLevel, WidthType } = window.docx;
+  const data = currentData();
+  const kpis = kpi(data);
+  const doc = new Document({
+    sections:[{
+      children:[
+        new Paragraph({text:'Análisis de Estudiantes', heading:HeadingLevel.TITLE}),
+        new Paragraph({text:`Generado: ${new Date().toLocaleString()}`}),
+        new Paragraph({text:' '}),
+        new Paragraph({text:`Total: ${kpis.total} | Activos: ${kpis.activos} | Inactivos: ${kpis.inactivos} | Bajas: ${kpis.bajas}`}),
+        new Paragraph({text:'Distribución por grupo', heading:HeadingLevel.HEADING_2}),
+        tableFromPairs(Object.entries(kpis.porGrupo)),
+        new Paragraph({text:'Listado (resumen)', heading:HeadingLevel.HEADING_2}),
+        tableFromRows([['Nombre','Grupo','Estatus'], ...data.map(a=>[a.nombre, a.grupo||'—', a.status])])
+      ]
+    }]
+  });
+  const blob = await Packer.toBlob(doc);
+  downloadBlob(blob, 'analisis_estudiantes.docx');
+});
+
+function tableFromPairs(pairs){
+  const { Table, TableRow, TableCell, WidthType } = window.docx;
+  return new Table({
+    width:{ size: 100, type: WidthType.PERCENTAGE },
+    rows: [
+      new TableRow({ children:[ new TableCell({children:[p('Grupo')] }), new TableCell({children:[p('Alumnos')] }) ] }),
+      ...pairs.map(([g,c]) => new TableRow({ children:[ new TableCell({children:[p(g)]}), new TableCell({children:[p(String(c))]}) ] }))
+    ]
+  });
+}
+function tableFromRows(rows){
+  const { Table, TableRow, TableCell, WidthType } = window.docx;
+  return new Table({
+    width:{ size: 100, type: WidthType.PERCENTAGE },
+    rows: rows.map(r=> new TableRow({ children: r.map(c=> new TableCell({children:[p(String(c))]})) }))
+  });
+}
+function p(text){ const { Paragraph, TextRun } = window.docx; return new Paragraph({children:[new TextRun(text)]}); }
+function kpi(arr){
+  const total = arr.length;
+  const activos = arr.filter(a=>a.status==='ACTIVO').length;
+  const inactivos = arr.filter(a=>a.status==='INACTIVO').length;
+  const bajas = arr.filter(a=>a.status==='BAJA').length;
+  const porGrupo = arr.reduce((m,a)=>{ const g=a.grupo||'—'; m[g]=(m[g]||0)+1; return m; },{});
+  return {total, activos, inactivos, bajas, porGrupo};
+}
+function downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+  setTimeout(()=> URL.revokeObjectURL(url), 1000);
+}
+function escapeXml(s){ return String(s).replace(/[<>&'"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c])); }
+
+/* =======================
+   Toggle + Filtros
+======================= */
+$('#btnToggleVista').on('click', function(){
+  const view = $(this).attr('data-view');
+  if(view==='cards'){
+    $('#vistaTarjetas').addClass('d-none');
+    $('#vistaLista').removeClass('d-none');
+    $(this).attr('data-view','list').attr('title','Ver como tarjetas').html('<i class="fas fa-th"></i>');
+    renderTabla();
+  } else {
+    $('#vistaLista').addClass('d-none');
+    $('#vistaTarjetas').removeClass('d-none');
+    $(this).attr('data-view','cards').attr('title','Ver como lista').html('<i class="fas fa-list"></i>');
+    renderTarjetas();
+  }
+});
+
+$filtroGrupo.on('change', refreshViews);
+$filtroEstatus.on('change', refreshViews);
+$buscar.on('input', function(){ refreshViews(true); });
+
+function refreshViews(soft=false){
+  if($('#vistaLista').hasClass('d-none')) renderTarjetas();
+  else {
+    if(soft && dt){ dt.search($buscar.val()||'').draw(); }
+    else renderTabla();
+  }
+}
+
+/* =======================
+   Init
+======================= */
+$(function(){
+  gruposOptions($filtroGrupo, true);
+  gruposOptions($('#ed_grupo'), false);
+  renderTarjetas();
+});
+</script>
+
+</body>
+</html>

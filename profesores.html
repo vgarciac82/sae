@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <title>Demo - Módulo Profesores</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+  <!-- AdminLTE 3 + Bootstrap 4 + FontAwesome -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+
+  <!-- DataTables -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-dt@1.13.8/css/jquery.dataTables.min.css">
+
+  <!-- FullCalendar (agenda por profesor) -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet"/>
+
+  <style>
+    .toolbar {
+      display:flex; flex-wrap:wrap; gap:.75rem; align-items:center;
+    }
+    .toolbar .search { flex:1 1 280px; min-width:260px; }
+    .badge.estado { font-size: .85rem; }
+    .badge.PRE, .badge["PRE-REGISTRADO"] { background:#6c757d;}
+    .badge["EN FIRMA"] { background:#17a2b8;}
+    .badge.ACTIVO { background:#28a745;}
+    .badge.INACTIVO { background:#6c757d;}
+    .chip { display:inline-block; padding:.15rem .5rem; border-radius:10rem; background:#f1f1f1; margin:.1rem .2rem; }
+    .card-teacher img { width:64px; height:64px; object-fit:cover; }
+    .fc .fc-toolbar-title{ font-size:1rem; }
+    .swal2-select, .swal2-input{ width:100%!important; }
+    .table-sm td, .table-sm th{ padding:.4rem .5rem; }
+  </style>
+</head>
+<body class="hold-transition">
+
+<!-- Header -->
+<section class="content-header">
+  <div class="container-fluid">
+    <h1 class="m-0 mb-3"><i class="fas fa-chalkboard-teacher mr-2"></i>Profesores (Demo)</h1>
+
+    <!-- Toolbar -->
+    <div class="card">
+      <div class="card-body toolbar">
+        <div class="input-group search">
+          <input id="txtBuscar" class="form-control" placeholder="Buscar por nombre, idioma, grupo...">
+          <div class="input-group-append"><span class="input-group-text"><i class="fas fa-search"></i></span></div>
+        </div>
+
+        <select id="filtroIdioma" class="form-control" title="Idioma/Especialidad" style="min-width:180px">
+          <option value="">Todos los idiomas</option>
+        </select>
+
+        <select id="filtroEstatus" class="form-control" title="Estatus" style="min-width:180px">
+          <option value="">Todos los estatus</option>
+          <option>PRE-REGISTRADO</option>
+          <option>EN FIRMA</option>
+          <option>ACTIVO</option>
+          <option>INACTIVO</option>
+          <option>SUPLENTE</option>
+        </select>
+
+        <button id="btnNuevo" class="btn btn-primary"><i class="fas fa-user-plus mr-2"></i>Nuevo Profesor</button>
+
+        <button id="btnToggle" class="btn btn-outline-secondary" data-view="cards" title="Ver como lista">
+          <i class="fas fa-list"></i>
+        </button>
+
+        <div class="btn-group">
+          <button class="btn btn-outline-info dropdown-toggle" data-toggle="dropdown">
+            <i class="fas fa-file-export mr-2"></i>Exportar
+          </button>
+          <div class="dropdown-menu dropdown-menu-right">
+            <a class="dropdown-item" href="#" id="expPdf"><i class="far fa-file-pdf mr-2"></i>PDF (Listado)</a>
+            <a class="dropdown-item" href="#" id="expXml"><i class="far fa-file-code mr-2"></i>XML (Padrón)</a>
+            <a class="dropdown-item" href="#" id="expWord"><i class="far fa-file-word mr-2"></i>Word (Análisis)</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /Toolbar -->
+  </div>
+</section>
+
+<!-- Contenido -->
+<section class="content">
+  <div class="container-fluid">
+
+    <!-- Vista Cards -->
+    <div id="vistaCards" class="row" style="row-gap:1rem;"></div>
+
+    <!-- Vista Lista -->
+    <div id="vistaLista" class="card d-none">
+      <div class="card-body">
+        <table id="dtProfes" class="table table-striped table-bordered w-100"></table>
+      </div>
+    </div>
+
+    <!-- Sub-sección: Agenda (FullCalendar) -->
+    <div class="card mt-3">
+      <div class="card-header">
+        <h3 class="card-title mb-0"><i class="far fa-calendar-alt mr-2"></i>Agenda del profesor (vista rápida)</h3>
+      </div>
+      <div class="card-body">
+        <div id="calendar" style="max-width:100%;"></div>
+        <small class="text-muted">Selecciona un profesor y usa “Ver agenda” para cargar sus clases/suplencias.</small>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- MODAL: Alta nuevo profesor -->
+<div class="modal fade" id="modalNuevo" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form id="frmNuevo" class="modal-content" enctype="multipart/form-data">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-user-plus mr-2"></i>Alta de nuevo profesor</h5>
+        <button class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>Nombre completo *</label>
+            <input id="nv_nombre" class="form-control" required>
+          </div>
+          <div class="form-group col-md-3">
+            <label>Email *</label>
+            <input id="nv_email" type="email" class="form-control" required>
+          </div>
+          <div class="form-group col-md-3">
+            <label>Teléfono *</label>
+            <input id="nv_tel" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            <label>Ciudad</label>
+            <input id="nv_ciudad" class="form-control">
+          </div>
+          <div class="form-group col-md-3">
+            <label>País</label>
+            <input id="nv_pais" class="form-control">
+          </div>
+          <div class="form-group col-md-6">
+            <label>Idiomas / Niveles *</label>
+            <input id="nv_idiomas" class="form-control" placeholder="Ej: Inglés B2, Francés A2" required>
+          </div>
+        </div>
+
+        <hr>
+        <h6 class="mb-2">Adjuntos (demo)</h6>
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <label>Identificación (PDF/JPG/PNG)</label>
+            <input id="nv_idof" type="file" class="form-control-file" accept=".pdf,.jpg,.jpeg,.png">
+          </div>
+          <div class="form-group col-md-4">
+            <label>Comprobante domicilio</label>
+            <input id="nv_comp" type="file" class="form-control-file" accept=".pdf,.jpg,.jpeg,.png">
+          </div>
+          <div class="form-group col-md-4">
+            <label>Contrato firmado (si ya existe)</label>
+            <input id="nv_contrato" type="file" class="form-control-file" accept=".pdf">
+          </div>
+        </div>
+
+        <small class="text-muted d-block">En el demo se valida por extensión y se marcan estados visuales.</small>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary" type="submit">Guardar / Generar contrato</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar/Actualizar -->
+<div class="modal fade" id="modalEdit" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="frmEdit" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-edit mr-2"></i>Actualizar profesor</h5>
+        <button class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="ed_id">
+        <div class="form-group"><label>Nombre</label><input id="ed_nombre" class="form-control"></div>
+        <div class="form-group"><label>Email</label><input id="ed_email" type="email" class="form-control"></div>
+        <div class="form-group"><label>Teléfono</label><input id="ed_tel" class="form-control"></div>
+        <div class="form-group"><label>Idiomas/Niveles</label><input id="ed_idiomas" class="form-control"></div>
+        <div class="form-group"><label>Estatus</label>
+          <select id="ed_status" class="form-control">
+            <option>PRE-REGISTRADO</option><option>EN FIRMA</option><option>ACTIVO</option><option>INACTIVO</option><option>SUPLENTE</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">Cerrar</button>
+        <button class="btn btn-primary" type="submit">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Historial -->
+<div class="modal fade" id="modalHist" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title"><i class="fas fa-history mr-2"></i>Historial</h5>
+        <button class="close" data-dismiss="modal">&times;</button></div>
+      <div class="modal-body">
+        <ul id="histList" class="list-group list-group-flush"></ul>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" data-dismiss="modal">Cerrar</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- JS: jQuery + Bootstrap + AdminLTE -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+<!-- DataTables -->
+<script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.8/js/jquery.dataTables.min.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- FullCalendar -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+<!-- Export: jsPDF + autotable + docx -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+
+<script>
+/* =========================
+   DATOS MOCK (en memoria)
+========================= */
+const grupos = [
+  {id:'A1M1', nombre:'A1-M1', horario:'Lun-Mié 09:00–10:00', idioma:'Inglés', nivel:'A1'},
+  {id:'B2T1', nombre:'B2-T1', horario:'Mar-Jue 10:00–11:00', idioma:'Inglés', nivel:'B2'},
+  {id:'FR_A2', nombre:'FR-A2', horario:'Lun 18:00–20:00', idioma:'Francés', nivel:'A2'},
+  {id:'DE_B1', nombre:'DE-B1', horario:'Sáb 09:00–11:00', idioma:'Alemán', nivel:'B1'},
+];
+
+let profesores = [
+  {
+    id:1, foto:'https://i.pravatar.cc/150?img=7', nombre:'Laura Fernández',
+    email:'laura@demo.com', tel:'555-100-0001', idiomas:['Inglés B2','Francés A2'],
+    ciudad:'CDMX', pais:'México', estatus:'ACTIVO',
+    disponibilidad:{ // bloques de disponibilidad (demo)
+      1:['09:00-12:00'], 2:['10:00-13:00'], 3:['09:00-12:00'], 4:[], 5:['18:00-20:00'], 6:['09:00-11:00'], 0:[]
+    },
+    grupos:['A1M1','FR_A2'], // ids
+    eventos:[ // agenda demo (FullCalendar)
+      { title:'A1-M1', start:addDays(0,'09:00'), end:addDays(0,'10:00') },
+      { title:'FR-A2', start:addDays(0,'18:00'), end:addDays(0,'20:00') },
+    ],
+    contrato:{ estado:'FIRMADO', ultima:'2025-07-10 12:30' },
+    historial:[['Alta','2024-10-01'],['Contrato firmado','2025-07-10'],['Asignación','A1-M1']]
+  },
+  {
+    id:2, foto:'https://i.pravatar.cc/150?img=15', nombre:'Marco Rivas',
+    email:'marco@demo.com', tel:'555-100-0002', idiomas:['Inglés A1','Inglés B1'],
+    ciudad:'GDL', pais:'México', estatus:'EN FIRMA',
+    disponibilidad:{ 1:['10:00-12:00'],2:['10:00-12:00'],3:['10:00-12:00'],4:['10:00-12:00'],5:[],6:[],0:[] },
+    grupos:['B2T1'],
+    eventos:[ { title:'B2-T1', start:addDays(1,'10:00'), end:addDays(1,'11:00') } ],
+    contrato:{ estado:'EN FIRMA', ultima:'2025-08-10 09:10' },
+    historial:[['Pre-registro','2025-08-01'],['Contrato generado','2025-08-10']]
+  },
+  {
+    id:3, foto:'https://i.pravatar.cc/150?img=24', nombre:'Sofía Díaz',
+    email:'sofia@demo.com', tel:'555-100-0003', idiomas:['Alemán B1','Inglés B2'],
+    ciudad:'MTY', pais:'México', estatus:'INACTIVO',
+    disponibilidad:{ 1:[],2:['18:00-20:00'],3:[],4:['18:00-20:00'],5:[],6:['09:00-11:00'],0:[] },
+    grupos:['DE_B1'],
+    eventos:[ { title:'DE-B1', start:addDays(5,'09:00'), end:addDays(5,'11:00') } ],
+    contrato:{ estado:'ARCHIVADO', ultima:'2024-12-20 15:30' },
+    historial:[['Baja temporal','2025-01-15']]
+  },
+];
+
+const suplentes = () => profesores.filter(p=>p.estatus==='SUPLENTE' || p.estatus==='ACTIVO'); // demo
+
+/* Utilidad fecha */
+function addDays(d, hhmm){
+  const base = new Date(); base.setHours(0,0,0,0);
+  base.setDate(base.getDate()+d);
+  const [h,m] = hhmm.split(':').map(Number);
+  base.setHours(h,m,0,0);
+  return base.toISOString().replace('.000Z','Z');
+}
+
+/* =========================
+   CONTROLES Y VISTAS
+========================= */
+const $cards = $('#vistaCards');
+const $lista = $('#vistaLista');
+const $buscar = $('#txtBuscar');
+const $idioma = $('#filtroIdioma');
+const $estatus = $('#filtroEstatus');
+let dt; // datatable
+let calendar; // fullcalendar instancia
+
+$(function(){
+  // Filtro idioma: construir del dataset
+  const setIdiomas = new Set();
+  profesores.forEach(p=>p.idiomas.forEach(x=> setIdiomas.add(x.split(' ')[0]))); // solo idioma
+  grupos.forEach(g=> setIdiomas.add(g.idioma));
+  [...setIdiomas].sort().forEach(i=>$idioma.append(`<option>${i}</option>`));
+
+  renderCards();
+  initCalendar();
+
+  // Eventos
+  $('#btnToggle').on('click', toggleVista);
+  $buscar.on('input', refresh);
+  $idioma.on('change', refresh);
+  $estatus.on('change', refresh);
+  $('#btnNuevo').on('click', openNuevo);
+
+  // Exportes
+  $('#expPdf').on('click', exportPDF);
+  $('#expXml').on('click', exportXML);
+  $('#expWord').on('click', exportWord);
+});
+
+/* Filtros */
+function dataset(){
+  const q = ($buscar.val()||'').toLowerCase();
+  const idi = $idioma.val();
+  const est = $estatus.val();
+  return profesores.filter(p=>{
+    const inQ = !q || [p.nombre, p.email, p.tel, p.idiomas.join(', '), (p.grupos||[]).join(', ')].join(' ').toLowerCase().includes(q);
+    const inI = !idi || p.idiomas.some(s => s.toLowerCase().includes(idi.toLowerCase()));
+    const inS = !est || p.estatus===est;
+    return inQ && inI && inS;
+  }).sort((a,b)=> a.nombre.localeCompare(b.nombre));
+}
+
+/* Render Cards */
+function renderCards(){
+  $cards.empty();
+  const data = dataset();
+  if(!data.length){ $cards.append('<div class="col-12"><div class="alert alert-light">Sin resultados</div></div>'); return; }
+  data.forEach(p=>{
+    const gruposChips = (p.grupos||[]).map(gid=>`<span class="chip">${grupos.find(g=>g.id===gid)?.nombre||gid}</span>`).join('');
+    const hoy = resumenHoy(p);
+    $cards.append(`
+      <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+        <div class="card card-teacher h-100">
+          <div class="card-body d-flex">
+            <img src="${p.foto}" class="img-circle elevation-2 mr-3" alt="">
+            <div class="flex-grow-1">
+              <h5 class="mb-1">${p.nombre}</h5>
+              <div class="text-muted small mb-1"><i class="fas fa-language mr-1"></i>${p.idiomas.join(', ')}</div>
+              <div class="text-muted small mb-1"><i class="far fa-clock mr-1"></i>${hoy || 'Hoy: —'}</div>
+              <span class="badge estado ${p.estatus}">${p.estatus}</span>
+            </div>
+          </div>
+          <div class="px-3 pb-2">${gruposChips}</div>
+          <div class="card-footer py-2">
+            ${accionesHtml(p)}
+          </div>
+        </div>
+      </div>
+    `);
+  });
+}
+
+/* Render Lista (DataTable) */
+function renderTabla(){
+  if(dt){ dt.destroy(); $('#dtProfes').empty(); }
+  const data = dataset();
+  dt = $('#dtProfes').DataTable({
+    language:{url:'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json'},
+    data, pageLength:10, deferRender:true, dom:'tip',
+    columns: [
+      {title:'Foto', data:'foto', orderable:false, render:d=>`<img src="${d}" class="img-circle" style="width:40px;height:40px;object-fit:cover;">`},
+      {title:'Nombre', data:'nombre'},
+      {title:'Idiomas', data:'idiomas', render:arr=>arr.join(', ')},
+      {title:'Grupos activos', data:'grupos', render:arr=>(arr||[]).map(g=>`<span class="chip">${grupos.find(x=>x.id===g)?.nombre||g}</span>`).join(' ')},
+      {title:'Horario hoy', data:null, render:p=> resumenHoy(p)||'—'},
+      {title:'Estatus', data:'estatus', render:s=>`<span class="badge estado ${s}">${s}</span>`},
+      {title:'Acciones', data:null, orderable:false, render:p=>accionesHtml(p)}
+    ]
+  });
+}
+
+/* Acciones (HTML) según estatus */
+function accionesHtml(p){
+  const base = `
+    <div class="btn-group">
+      <button class="btn btn-sm btn-outline-info mr-1" title="Historial" onclick="verHist(${p.id})"><i class="fas fa-history"></i></button>
+      <button class="btn btn-sm btn-outline-secondary mr-1" title="Disponibilidad" onclick="editarDisp(${p.id})"><i class="far fa-calendar-check"></i></button>
+      <button class="btn btn-sm btn-outline-dark mr-1" title="Ver agenda" onclick="verAgenda(${p.id})"><i class="far fa-calendar-alt"></i></button>
+  `;
+  if(p.estatus==='ACTIVO' || p.estatus==='EN FIRMA' || p.estatus==='PRE-REGISTRADO' || p.estatus==='SUPLENTE'){
+    return base + `
+      <button class="btn btn-sm btn-outline-primary mr-1" title="Asignar a grupo" onclick="asignarGrupo(${p.id})"><i class="fas fa-user-plus"></i></button>
+      <button class="btn btn-sm btn-outline-warning mr-1" title="Sustitución" onclick="sustitucion(${p.id})"><i class="fas fa-exchange-alt"></i></button>
+      <button class="btn btn-sm btn-outline-success mr-1" title="Actualizar datos" onclick="editarProf(${p.id})"><i class="fas fa-edit"></i></button>
+      <button class="btn btn-sm btn-outline-danger mr-1" title="Registrar baja" onclick="bajaProf(${p.id})"><i class="fas fa-user-times"></i></button>
+      <button class="btn btn-sm btn-outline-info" title="Imprimir contrato" onclick="imprimirContrato(${p.id})"><i class="far fa-file-pdf"></i></button>
+    </div>`;
+  } else {
+    return base + `
+      <button class="btn btn-sm btn-outline-success" title="Reactivar" onclick="reactivarProf(${p.id})"><i class="fas fa-user-check"></i></button>
+    </div>`;
+  }
+}
+
+/* Resumen de horario del día (demo) */
+function resumenHoy(p){
+  const d = new Date().getDay(); // 0..6
+  const bloques = p.disponibilidad?.[d]||[];
+  return bloques.length? `Disponible ${bloques.join(', ')}` : '';
+}
+
+/* Toggle vista */
+function toggleVista(){
+  const v = $(this).attr('data-view');
+  if(v==='cards'){ // pasar a lista
+    $('#vistaCards').addClass('d-none');
+    $('#vistaLista').removeClass('d-none');
+    $(this).attr('data-view','list').attr('title','Ver como tarjetas').html('<i class="fas fa-th"></i>');
+    renderTabla();
+  } else { // pasar a cards
+    $('#vistaLista').addClass('d-none');
+    $('#vistaCards').removeClass('d-none');
+    $(this).attr('data-view','cards').attr('title','Ver como lista').html('<i class="fas fa-list"></i>');
+    renderCards();
+  }
+}
+
+/* Refresh render (según vista) */
+function refresh(){
+  if($('#vistaLista').hasClass('d-none')) renderCards();
+  else renderTabla();
+}
+
+/* =========================
+   AGENDA (FullCalendar)
+========================= */
+function initCalendar(){
+  const calendarEl = document.getElementById('calendar');
+  calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'timeGridWeek',
+    height: 'auto',
+    slotMinTime:'07:00:00', slotMaxTime:'22:00:00',
+    headerToolbar:{ left:'prev,next today', center:'title', right:'timeGridWeek,dayGridMonth' },
+  });
+  calendar.render();
+}
+
+function verAgenda(id){
+  const p = profesores.find(x=>x.id===id);
+  calendar.removeAllEvents();
+  (p.eventos||[]).forEach(ev=> calendar.addEvent(ev));
+  Swal.fire('Agenda cargada', 'Se actualizó la agenda en la sección inferior.', 'success');
+}
+
+/* =========================
+   HISTORIAL
+========================= */
+function verHist(id){
+  const p = profesores.find(x=>x.id===id);
+  const html = (p.historial||[]).map(h=>`<li class="list-group-item"><b>${h[0]}:</b> ${h[1]||''}
+    <span class="text-muted small float-right">${new Date().toLocaleDateString()}</span></li>`).join('') || '<li class="list-group-item">Sin eventos</li>';
+  $('#histList').html(html);
+  $('#modalHist').modal('show');
+}
+
+/* =========================
+   DISPONIBILIDAD (edición rápida)
+========================= */
+function editarDisp(id){
+  const p = profesores.find(x=>x.id===id);
+  const dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  let html = '<div class="text-left">';
+  for(let d=0; d<7; d++){
+    const val = (p.disponibilidad?.[d]||[]).join(', ');
+    html += `<label>${dias[d]}</label><input id="disp_${d}" class="swal2-input" placeholder="HH:MM-HH:MM, ..." value="${val}">`;
+  }
+  html += '</div>';
+  Swal.fire({
+    title: 'Disponibilidad semanal',
+    html, width: 600, focusConfirm:false, showCancelButton:true,
+    confirmButtonText:'Guardar'
+  }).then(res=>{
+    if(res.isConfirmed){
+      p.disponibilidad = {};
+      for(let d=0; d<7; d++){
+        const raw = (document.getElementById('disp_'+d).value||'').trim();
+        p.disponibilidad[d] = raw? raw.split(',').map(s=>s.trim()) : [];
+      }
+      p.historial = [['Disponibilidad actualizada','—'], ...(p.historial||[])];
+      refresh(); Swal.fire('Guardado','Disponibilidad actualizada.','success');
+    }
+  });
+}
+
+/* =========================
+   ASIGNAR A GRUPO (con chequeo de choques)
+========================= */
+function asignarGrupo(id){
+  const p = profesores.find(x=>x.id===id);
+  const opts = grupos.map(g=>`<option value="${g.id}">${g.nombre} (${g.horario})</option>`).join('');
+  Swal.fire({
+    title:'Asignar a grupo',
+    html:`<div class="text-left">
+      <label>Grupo</label><select id="asgGrupo" class="swal2-select">${opts}</select>
+      <label class="mt-2">Desde (fecha)</label><input id="asgFecha" type="date" class="swal2-input" value="${new Date().toISOString().slice(0,10)}">
+    </div>`,
+    showCancelButton:true, confirmButtonText:'Asignar'
+  }).then(r=>{
+    if(r.isConfirmed){
+      const gid = $('#asgGrupo').val(); const g = grupos.find(x=>x.id===gid);
+      // Chequeo simple de choques: disponibilidad del día de inicio vs horario del grupo (demo)
+      const ok = validaChoque(p, g);
+      if(!ok) return Swal.fire('Conflicto', 'El horario choca con otras clases o su disponibilidad.', 'error');
+      if(!p.grupos.includes(gid)) p.grupos.push(gid);
+      p.eventos = p.eventos || [];
+      p.eventos.push({ title:g.nombre, start:addDays(0, g.horario.substring(0,5)), end:addDays(0, g.horario.substring(9,14)) }); // demo muy simple
+      p.historial = [['Asignación a grupo', g.nombre], ...(p.historial||[])];
+      refresh(); Swal.fire('Asignado','Grupo agregado al profesor.','success');
+    }
+  });
+}
+
+/* Valida choques muy simplificados (demo): compara bloque "HH:MM-HH:MM" con disponibilidad día actual */
+function validaChoque(p, g){
+  // convertir horario g.horario -> primer bloque HH:MM–HH:MM
+  const m = g.horario.match(/(\d{2}:\d{2}).*(\d{2}:\d{2})/);
+  if(!m) return true; // si no parsea, no bloquea
+  const [_, hi, hf] = m;
+  // día actual
+  const d = new Date().getDay();
+  const bloques = p.disponibilidad?.[d]||[];
+  // si no hay disponibilidad hoy, consideramos conflicto
+  if(!bloques.length) return false;
+  // check si alguno contiene el rango
+  return bloques.some(b=>{
+    const mm = b.match(/(\d{2}:\d{2})-(\d{2}:\d{2})/);
+    if(!mm) return false;
+    const [__, bi, bf] = mm;
+    return (bi <= hi && hf <= bf);
+  });
+}
+
+/* =========================
+   SUSTITUCIÓN (ausencia + sugerencias)
+========================= */
+function sustitucion(id){
+  const p = profesores.find(x=>x.id===id);
+  // sugerencias de suplentes: mismo idioma principal del primer grupo, disponibles hoy (demo)
+  const idiomaBase = (p.idiomas[0]||'').split(' ')[0];
+  const candidatos = suplentes().filter(s=> s.id!==p.id && s.idiomas.some(x=>x.toLowerCase().includes(idiomaBase.toLowerCase())));
+  const opts = candidatos.map(c=>`<option value="${c.id}">${c.nombre} — ${c.idiomas.join(', ')}</option>`).join('') || '<option value="">(Sin candidatos)</option>';
+
+  Swal.fire({
+    title:'Reportar ausencia / Asignar suplente',
+    html:`<div class="text-left">
+      <label>Fecha</label><input id="sxFecha" type="date" class="swal2-input" value="${new Date().toISOString().slice(0,10)}">
+      <label>Hora (inicio–fin)</label><input id="sxHora" class="swal2-input" placeholder="HH:MM-HH:MM" value="10:00-11:00">
+      <label>Suplente</label><select id="sxSup" class="swal2-select">${opts}</select>
+    </div>`,
+    showCancelButton:true, confirmButtonText:'Confirmar'
+  }).then(r=>{
+    if(r.isConfirmed){
+      const supId = +$('#sxSup').val();
+      const sup = profesores.find(x=>x.id===supId);
+      // En demo: agregar evento al suplente
+      if(sup){
+        const h = ($('#sxHora').val()||'10:00-11:00').split('-');
+        sup.eventos = sup.eventos||[];
+        sup.eventos.push({ title:'Suplencia', start:addDays(0, h[0]), end:addDays(0, h[1]) });
+        sup.historial = [['Suplencia asignada', `Para ${p.nombre}`], ...(sup.historial||[])];
+      }
+      p.historial = [['Ausencia reportada', $('#sxFecha').val()+' '+($('#sxHora').val()||'')], ...(p.historial||[])];
+      Swal.fire('Registrado','Ausencia y suplencia registradas (demo).','success');
+    }
+  });
+}
+
+/* =========================
+   EDITAR / BAJA / REACTIVAR
+========================= */
+function editarProf(id){
+  const p = profesores.find(x=>x.id===id);
+  $('#ed_id').val(p.id);
+  $('#ed_nombre').val(p.nombre);
+  $('#ed_email').val(p.email);
+  $('#ed_tel').val(p.tel);
+  $('#ed_idiomas').val(p.idiomas.join(', '));
+  $('#ed_status').val(p.estatus);
+  $('#modalEdit').modal('show');
+}
+
+$('#frmEdit').on('submit', function(e){
+  e.preventDefault();
+  const id = +$('#ed_id').val();
+  const p = profesores.find(x=>x.id===id);
+  p.nombre = $('#ed_nombre').val().trim();
+  p.email = $('#ed_email').val().trim();
+  p.tel = $('#ed_tel').val().trim();
+  p.idiomas = $('#ed_idiomas').val().split(',').map(s=>s.trim()).filter(Boolean);
+  p.estatus = $('#ed_status').val();
+  p.historial = [['Actualización','Datos editados'], ...(p.historial||[])];
+  $('#modalEdit').modal('hide');
+  refresh(); Swal.fire('Guardado','Profesor actualizado.','success');
+});
+
+function bajaProf(id){
+  Swal.fire({title:'Registrar baja', input:'text', inputLabel:'Motivo', showCancelButton:true, icon:'warning'})
+  .then(r=>{
+    if(r.isConfirmed){
+      const p = profesores.find(x=>x.id===id);
+      p.estatus = 'INACTIVO'; p.historial = [['Baja', r.value||'—'], ...(p.historial||[])];
+      refresh(); Swal.fire('Listo','Baja registrada.','success');
+    }
+  });
+}
+
+function reactivarProf(id){
+  Swal.fire({title:'Reactivar profesor', showCancelButton:true, confirmButtonText:'Reactivar'})
+  .then(r=>{
+    if(r.isConfirmed){
+      const p = profesores.find(x=>x.id===id);
+      p.estatus = 'ACTIVO'; p.historial = [['Reactivación','—'], ...(p.historial||[])];
+      refresh(); Swal.fire('Reactivado','Profesor activo.','success');
+    }
+  });
+}
+
+/* =========================
+   ALTA NUEVO PROFESOR + CONTRATO
+========================= */
+function openNuevo(){ 
+  $('#frmNuevo')[0].reset(); 
+  $('#modalNuevo').modal('show'); 
+}
+
+$('#frmNuevo').on('submit', function(e){
+  e.preventDefault();
+  const nombre = $('#nv_nombre').val().trim();
+  const email  = $('#nv_email').val().trim();
+  const tel    = $('#nv_tel').val().trim();
+  const idiomas= $('#nv_idiomas').val().split(',').map(s=>s.trim()).filter(Boolean);
+  if(!nombre || !email || !tel || !idiomas.length) return Swal.fire('Faltan datos','Completa los campos requeridos.','info');
+
+  const nuevo = {
+    id: Math.max(0,...profesores.map(x=>x.id))+1,
+    foto: 'https://i.pravatar.cc/150?u='+encodeURIComponent(email),
+    nombre, email, tel,
+    ciudad: $('#nv_ciudad').val().trim(), pais: $('#nv_pais').val().trim(),
+    idiomas, estatus:'PRE-REGISTRADO', disponibilidad:{}, grupos:[],
+    eventos:[], contrato:{ estado:'GENERADO', ultima:new Date().toLocaleString() },
+    historial:[['Pre-registro','Creado en demo']]
+  };
+
+  // Valida adjuntos (solo extensión)
+  const okFiles = validateFiles([
+    {el:'#nv_idof', exts:['pdf','jpg','jpeg','png']},
+    {el:'#nv_comp', exts:['pdf','jpg','jpeg','png']},
+    {el:'#nv_contrato', exts:['pdf']}
+  ]);
+  if(!okFiles) return;
+
+  profesores.push(nuevo);
+  $('#modalNuevo').modal('hide');
+  refresh();
+
+  // Generar contrato (PDF) de inmediato y simular "enviar para firma"
+  generarContratoPDF(nuevo, false); // false => sólo generar
+  Swal.fire({
+    title:'Contrato generado',
+    text:'¿Enviar para firma ahora (simulado)?',
+    showCancelButton:true, confirmButtonText:'Enviar'
+  }).then(r=>{
+    if(r.isConfirmed){
+      nuevo.estatus = 'EN FIRMA';
+      nuevo.contrato.estado='EN FIRMA'; nuevo.contrato.ultima=new Date().toLocaleString();
+      nuevo.historial = [['Contrato enviado para firma','Demo'], ...nuevo.historial];
+      refresh(); Swal.fire('Enviado','Contrato enviado (simulado).','success');
+    } else {
+      Swal.fire('Listo','Puedes imprimir el contrato desde las acciones.','info');
+    }
+  });
+});
+
+function validateFiles(rules){
+  for(const r of rules){
+    const f = $(r.el)[0].files?.[0]; if(!f) continue; // opcional
+    const ext = (f.name.split('.').pop()||'').toLowerCase();
+    if(!r.exts.includes(ext)){
+      Swal.fire('Archivo no permitido', `Solo: ${r.exts.join(', ')}`, 'error');
+      return false;
+    }
+  }
+  return true;
+}
+
+/* =========================
+   CONTRATO: IMPRIMIR (PDF)
+========================= */
+function imprimirContrato(id){
+  const p = profesores.find(x=>x.id===id);
+  generarContratoPDF(p, true);
+}
+
+function generarContratoPDF(p, autoSave){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(16);
+  doc.text('CONTRATO DE PRESTACIÓN DE SERVICIOS DOCENTES', 14, 18);
+  doc.setFontSize(11);
+  const hoy = new Date().toLocaleDateString();
+  const cuerpo =
+`En la ciudad de ${p.ciudad||'—'}, ${p.pais||'—'}, a ${hoy}, las partes convienen lo siguiente:
+1. El Profesor ${p.nombre} se compromete a impartir clases en los niveles/idiomas: ${p.idiomas.join(', ')}.
+2. Horarios y grupos se asignarán conforme disponibilidad y calendarios de la institución.
+3. La remuneración se liquidará según el módulo de Pagos a Profesores.
+4. El Profesor acepta políticas de puntualidad, asistencia y sustitución cuando aplique.
+5. Este contrato entra en vigor a partir de su firma y podrá archivarse al término del servicio.`;
+
+  const lineas = doc.splitTextToSize(cuerpo, 180);
+  doc.text(lineas, 14, 30);
+  doc.text(`Estado del contrato: ${p.contrato?.estado||'GENERADO'}`, 14, 120);
+  doc.text(`Profesor: ${p.nombre}  |  Email: ${p.email}`, 14, 130);
+
+  // Firmas (simuladas)
+  doc.line(30, 160, 100, 160); doc.text('Profesor', 50, 166);
+  doc.line(120, 160, 190, 160); doc.text('Representante', 138, 166);
+
+  const filename = `Contrato_${p.nombre.replace(/\s+/g,'_')}.pdf`;
+  if(autoSave) doc.save(filename);
+  return doc;
+}
+
+/* =========================
+   EXPORTACIONES
+========================= */
+function currentData(){ return dataset(); }
+
+function exportPDF(e){
+  e?.preventDefault?.();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const rows = currentData().map(p=>[p.nombre, p.idiomas.join(', '), (p.grupos||[]).map(gid=>grupos.find(g=>g.id===gid)?.nombre||gid).join(', '), p.estatus]);
+  doc.text('Listado de Profesores', 14, 16);
+  doc.setFontSize(10); doc.text(`Generado: ${new Date().toLocaleString()}`, 14, 22);
+  doc.autoTable({ head:[['Nombre','Idiomas','Grupos','Estatus']], body:rows, startY:26, styles:{fontSize:9} });
+  doc.save('profesores.pdf');
+}
+
+function exportXML(e){
+  e?.preventDefault?.();
+  const items = currentData().map(p=>`
+  <teacher id="${p.id}">
+    <fullName>${xml(p.nombre)}</fullName>
+    <email>${xml(p.email)}</email>
+    <phone>${xml(p.tel)}</phone>
+    <languages>${xml(p.idiomas.join(', '))}</languages>
+    <groups>${xml((p.grupos||[]).join(', '))}</groups>
+    <status>${xml(p.estatus)}</status>
+    <contract>${xml(p.contrato?.estado||'')}</contract>
+    <city>${xml(p.ciudad||'')}</city>
+    <country>${xml(p.pais||'')}</country>
+  </teacher>`).join('');
+  const xmlStr = `<?xml version="1.0" encoding="UTF-8"?>\n<teachers exportedAt="${new Date().toISOString()}">\n${items}\n</teachers>`;
+  downloadBlob(new Blob([xmlStr], {type:'application/xml'}), 'profesores.xml');
+}
+
+async function exportWord(e){
+  e?.preventDefault?.();
+  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, HeadingLevel, WidthType } = window.docx;
+  const data = currentData();
+  const kpis = {
+    total: data.length,
+    activos: data.filter(p=>p.estatus==='ACTIVO').length,
+    enFirma: data.filter(p=>p.estatus==='EN FIRMA').length,
+    inactivos: data.filter(p=>p.estatus==='INACTIVO').length
+  };
+  const porIdioma = data.reduce((m,p)=>{ (p.idiomas||[]).forEach(i=>{ const key=i.split(' ')[0]; m[key]=(m[key]||0)+1; }); return m; }, {});
+
+  const doc = new Document({
+    sections:[{
+      children:[
+        new Paragraph({text:'Análisis de Profesores', heading:HeadingLevel.TITLE}),
+        new Paragraph({text:`Generado: ${new Date().toLocaleString()}`}),
+        new Paragraph({text:`Total: ${kpis.total}  |  Activos: ${kpis.activos}  |  En firma: ${kpis.enFirma}  |  Inactivos: ${kpis.inactivos}`}),
+        new Paragraph({text:'Distribución por idioma', heading:HeadingLevel.HEADING_2}),
+        tableFromPairs(Object.entries(porIdioma)),
+        new Paragraph({text:'Listado (resumen)', heading:HeadingLevel.HEADING_2}),
+        tableFromRows([['Nombre','Idiomas','Estatus'], ...data.map(p=>[p.nombre, p.idiomas.join(', '), p.estatus])])
+      ]
+    }]
+  });
+  const blob = await Packer.toBlob(doc);
+  downloadBlob(blob, 'analisis_profesores.docx');
+}
+
+function tableFromPairs(pairs){
+  const { Table, TableRow, TableCell, WidthType } = window.docx;
+  return new Table({
+    width:{ size: 100, type: WidthType.PERCENTAGE },
+    rows: [ new TableRow({ children:[ new TableCell({children:[para('Clave')]}), new TableCell({children:[para('Cantidad')]}) ] }),
+      ...pairs.map(([k,v])=> new TableRow({ children:[ new TableCell({children:[para(k)]}), new TableCell({children:[para(String(v))]}) ] })) ]
+  });
+}
+function tableFromRows(rows){
+  const { Table, TableRow, TableCell, WidthType } = window.docx;
+  return new Table({ width:{ size:100, type:WidthType.PERCENTAGE },
+    rows: rows.map(r=> new TableRow({ children: r.map(c=> new TableCell({children:[para(String(c))]})) })) });
+}
+function para(t){ const { Paragraph, TextRun } = window.docx; return new Paragraph({children:[new TextRun(t)]}); }
+function xml(s){ return String(s||'').replace(/[<>&'"]/g,c=>({ '<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;' }[c])); }
+function downloadBlob(blob, filename){ const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download=filename; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); }
+
+/* =========================
+   UTIL
+========================= */
+function renderOrTable(){
+  if($('#vistaLista').hasClass('d-none')) renderCards();
+  else renderTabla();
+}
+</script>
+</body>
+</html>

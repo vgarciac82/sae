@@ -1,0 +1,136 @@
+<div class="content-wrapper">
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">Bienvenido, Administrador</h1>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-lg-4 col-12">
+          <div class="small-box bg-warning">
+            <div class="inner">
+              <h3>12</h3>
+              <p>Clases Muestra del Mes</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-chalkboard-teacher"></i>
+            </div>
+            <a href="#" class="small-box-footer">Más info <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-12">
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3>240</h3>
+              <p>Alumnos Activos</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-user-graduate"></i>
+            </div>
+            <a href="#" class="small-box-footer">Más info <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-12">
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3>87<sup style="font-size: 20px">%</sup></h3>
+              <p>Asistencia Promedio</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <a href="#" class="small-box-footer">Más info <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Agenda del Día</h3>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead class="thead-light">
+                <tr>
+                  <th>Hora</th>
+                  <th>Grupos con clase</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>08:00</td>
+                  <td><span data-toggle="tooltip" title="Maestro: Juan Pérez\nAlumnos: 12">A1</span></td>
+                </tr>
+                <tr>
+                  <td>09:00</td>
+                  <td>
+                    <span data-toggle="tooltip" title="Maestro: Juan Pérez\nAlumnos: 12">A1</span>,
+                    <span data-toggle="tooltip" title="Maestra: Ana Gómez\nAlumnos: 15">B2</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>10:00</td>
+                  <td><span data-toggle="tooltip" title="Maestra: Ana Gómez\nAlumnos: 15">B2</span></td>
+                </tr>
+                <tr>
+                  <td>11:00</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td>12:00</td>
+                  <td><span data-toggle="tooltip" title="Maestro: Luis Torres\nAlumnos: 10">C3</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Accesos Directos</h3>
+        </div>
+        <div class="card-body">
+          <div class="btn-group btn-group-toggle d-flex flex-wrap justify-content-around" data-toggle="buttons">
+            <a href="#" class="btn btn-outline-primary m-2" onclick="$('#main-content').load('agendar-clase-muestra.html')">
+              <i class="fas fa-calendar-plus mr-2"></i> Agendar Clase Muestra
+            </a>
+            <a href="#" class="btn btn-outline-success m-2">
+              <i class="fas fa-file-invoice-dollar mr-2"></i> Generar Facturas
+            </a>
+            <a href="#" class="btn btn-outline-info m-2">
+              <i class="fas fa-user-plus mr-2"></i> Inscripción Nuevo Alumno
+            </a>
+            <a href="#" class="btn btn-outline-warning m-2">
+              <i class="fas fa-calendar-alt mr-2"></i> Programar Clases Grupales
+            </a>
+            <a href="#" class="btn btn-outline-secondary m-2">
+              <i class="fas fa-chart-pie mr-2"></i> Ver Reportes
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <p>Usa el menú lateral para acceder a los módulos del sistema.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+  });
+</script>

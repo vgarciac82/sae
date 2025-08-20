@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Pago a Profesores</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+
+<body class="hold-transition sidebar-mini">
+  <div class="wrapper">
+    <section class="content pt-4 px-4">
+      <h2 class="mb-4">Pago a Profesores</h2>
+      <button class="btn btn-success mb-3" onclick="generarLayout()">Generar Layout Bancario</button>
+      <div class="table-responsive">
+        <table id="tablaPagos" class="table table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>Profesor</th>
+              <th>Semana</th>
+              <th>Grupo</th>
+              <th>Cupo</th>
+              <th>Clases</th>
+              <th>Ingreso por Clase</th>
+              <th>% Pago</th>
+              <th>Total a Pagar</th>
+              <th>Estatus</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyPagos"></tbody>
+        </table>
+      </div>
+      <div class="mt-4">
+        <h5>Resumen semanal por profesor</h5>
+        <div class="table-responsive">
+          <table class="table table-bordered" id="resumenProfesores">
+            <thead class="thead-light">
+              <tr>
+                <th>Profesor</th>
+                <th>Total Clases</th>
+                <th>Total a Pagar</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyResumen"></tbody>
+            <tfoot>
+              <tr>
+                <th class="text-right" colspan="2">Gran Total</th>
+                <th class="text-right text-bold" id="granTotal">$0.00</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Modal para pago manual -->
+    <div class="modal fade" id="modalPago" tabindex="-1" role="dialog" aria-labelledby="modalPagoLabel"
+      aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Registrar Pago Manual</h5>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form id="formPago">
+              <div class="form-group">
+                <label>Referencia de Pago</label>
+                <input type="text" class="form-control" id="referenciaPago" required>
+              </div>
+              <div class="form-group">
+                <label>Fecha del Pago</label>
+                <input type="date" class="form-control" id="fechaPago" required>
+              </div>
+              <input type="hidden" id="filaActual">
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary" form="formPago">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    const profesores = [
+      { nombre: "Ana Gómez", semana: "33", grupo: "A1", cupo: 4, clases: 5, ingreso: 140, clabe: "012345678901234567", banco: "Banorte" },
+      { nombre: "Luis Torres", semana: "33", grupo: "C3", cupo: 1, clases: 3, ingreso: 210, clabe: "002345678901234567", banco: "BBVA" }
+    ];
+    const porcentajePago = 0.4;
+
+    function cargarTabla() {
+      const tbody = $("#tbodyPagos");
+      tbody.empty();
+      profesores.forEach((p, i) => {
+        const total = (p.ingreso * porcentajePago).toFixed(2);
+        const estatus = '<span class="badge badge-warning">Pendiente</span>';
+        const acciones = `
+      <button class="btn btn-sm btn-outline-primary" onclick="abrirModal(${i})" title="Registrar Pago">
+        <i class="fas fa-credit-card"></i>
+      </button>`;
+        tbody.append(`
+      <tr>
+        <td>${p.nombre}</td>
+        <td>${p.semana}</td>
+        <td>${p.grupo}</td>
+        <td>${p.cupo}</td>
+        <td>${p.clases}</td>
+        <td>$${p.ingreso.toFixed(2)}</td>
+        <td>40%</td>
+        <td>$${total}</td>
+        <td id="estatus-${i}">${estatus}</td>
+        <td>${acciones}</td>
+      </tr>`);
+      });
+      $('#tablaPagos').DataTable();
+    }
+
+    function abrirModal(i) {
+      $('#filaActual').val(i);
+      $('#modalPago').modal('show');
+    }
+
+    $('#formPago').on('submit', function (e) {
+      e.preventDefault();
+      const i = $('#filaActual').val();
+      const ref = $('#referenciaPago').val();
+      const fecha = $('#fechaPago').val();
+      $(`#estatus-${i}`).html(`<span class="badge badge-success">Pagado</span><br><small>${ref}</small><br><small>${fecha}</small>`);
+      $('#modalPago').modal('hide');
+      $('#formPago')[0].reset();
+    });
+
+    function generarLayout() {
+      let csv = "Nombre,CLABE,Banco,Importe\n";
+      profesores.forEach(p => {
+        const total = (p.ingreso * porcentajePago).toFixed(2);
+        csv += `${p.nombre},${p.clabe},${p.banco},${total}\n`;
+      });
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "layout-pagos.csv";
+      link.click();
+    }
+
+    $(document).ready(cargarTabla);
+
+
+    function calcularResumen() {
+      const resumen = {};
+      let granTotal = 0;
+      profesores.forEach(p => {
+        const totalPagar = (p.ingreso * porcentajePago).toFixed(2);
+        if (!resumen[p.nombre]) {
+          resumen[p.nombre] = { clases: 0, total: 0 };
+        }
+        resumen[p.nombre].clases += p.clases;
+        resumen[p.nombre].total += parseFloat(totalPagar);
+        granTotal += parseFloat(totalPagar);
+      });
+
+      const tbody = document.getElementById("tbodyResumen");
+      tbody.innerHTML = "";
+      Object.keys(resumen).forEach(nombre => {
+        const r = resumen[nombre];
+        tbody.innerHTML += `
+      <tr>
+        <td>${nombre}</td>
+        <td>${r.clases}</td>
+        <td>$${r.total.toFixed(2)}</td>
+      </tr>`;
+      });
+
+      document.getElementById("granTotal").textContent = "$" + granTotal.toFixed(2);
+    }
+
+    $(document).ready(() => {
+      calcularResumen();
+    });
+
+  </script>
+</body>
+
+</html>

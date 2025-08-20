@@ -1,0 +1,277 @@
+
+<div class="container-fluid d-flex justify-content-center align-items-center py-5">
+    <form id="formMuestra" class="w-100" style="max-width: 900px;">
+        <h2 class="text-center mb-4 display-6">Agendar Nueva Clase Muestra</h2>
+
+        <!-- Card de Información Alumno -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                <h3 class="card-title h5 mb-0">Información Alumno</h3>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4 mb-3">
+                        <label for="nombre" class="form-label">Nombre completo</label>
+                        <input type="text" class="form-control" id="nombre" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="ap1" class="form-label">Apellido 1</label>
+                        <input type="text" class="form-control" required id="ap1">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="ap2" class="form-label">Apellido 2</label>
+                        <input type="text" class="form-control" id="ap2">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="fechaNacimiento" class="form-label">Fecha de nacimiento</label>
+                        <input type="date" class="form-control" id="fechaNacimiento" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="sexo" class="form-label">Sexo</label>
+                        <select class="form-control" id="sexo">
+                            <option>Masculino</option>
+                            <option>Femenino</option>
+                            <option>No registrar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="wechatId" class="form-label">ID o número de WeChat</label>
+                        <input type="text" class="form-control" id="wechatId" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label">Correo electrónico</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="comoSeEntero" class="form-label">¿Cómo se enteró de la escuela?</label>
+                        <select class="form-control" id="comoSeEntero">
+                            <option>Recomendación</option>
+                            <option>Redes sociales</option>
+                            <option>Google</option>
+                            <option>Otro</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Card de Información Alumno -->
+
+        <!-- Card de Selección de Clase -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                <h3 class="card-title h5 mb-0">Selección de Clase</h3>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4 mb-3">
+                        <label for="idiomaInteres" class="form-label">Idioma de interés</label>
+                        <select class="form-control" id="idiomaInteres" required>
+                            <option>Chino</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="prefGrupo" class="form-label">Preferencia de grupo</label>
+                        <select class="form-control" id="prefGrupo" required>
+                            <option>1:1</option>
+                            <option>2 Alumnos</option>
+                            <option>3 Alumnos</option>
+                            <option>4 Alumnos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="duracion" class="form-label">Duración de clase</label>
+                        <select class="form-control" id="duracion" required>
+                            <option selected>60 minutos</option>
+                            <option>90 minutos</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-center d-block">Disponibilidad horaria</label>
+                    <div class="centered-checkboxes">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" value="AM" id="slotAM">
+                            <label class="form-check-label" for="slotAM">Mañana (AM)</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" value="PM" id="slotPM">
+                            <label class="form-check-label" for="slotPM">Tarde (PM)</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" value="Noche" id="slotNoche">
+                            <label class="form-check-label" for="slotNoche">Noche</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Card de Selección de Clase -->
+        
+        <button type="submit" class="btn btn-primary w-100 mb-3">Buscar Grupos Disponibles</button>
+        
+        <hr class="my-4">
+        
+        <div id="resultados" class="mt-4 d-none">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0 h5">Grupos Disponibles</h4>
+                <button id="btnNuevoGrupo" class="btn btn-outline-primary">
+                    <i class="fas fa-users me-2"></i> Nuevo Grupo
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table id="gruposTable" class="table table-bordered table-striped w-100">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Grupo</th>
+                            <th scope="col">Profesor</th>
+                            <th scope="col">Horario</th>
+                            <th scope="col">Participantes</th>
+                            <th scope="col">Cupo</th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- filas dinámicas se insertarán aquí -->
+                        <tr>
+                            <td>Grupo A</td>
+                            <td>Profesor X</td>
+                            <td>L-M-V 10:00 AM</td>
+                            <td>2/4</td>
+                            <td>2</td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-link text-decoration-none">Seleccionar</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Grupo B</td>
+                            <td>Profesor Y</td>
+                            <td>M-J 4:00 PM</td>
+                            <td>1/3</td>
+                            <td>2</td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-link text-decoration-none">Seleccionar</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+  /* =======================
+     Datos DUMMY de grupos
+     ======================= */
+
+  var grupos = [
+    { codigo: "A1-60-AM", profesor: "María Torres", horario: "Lun 09:00 (AM)", participantes: 1, cupo: 4, duracion: "60 minutos", slot: "AM", tipo: "1:1" },
+    { codigo: "B2-60-PM", profesor: "Juan Pérez", horario: "Mar 18:00 (PM)", participantes: 2, cupo: 4, duracion: "60 minutos", slot: "PM", tipo: "3 Alumnos" },
+    { codigo: "C3-90-NOC", profesor: "Ana Gómez", horario: "Mié 20:00 (Noche)", participantes: 3, cupo: 4, duracion: "90 minutos", slot: "Noche", tipo: "4 Alumnos" },
+    { codigo: "D4-60-AM", profesor: "Luis Díaz", horario: "Jue 10:00 (AM)", participantes: 0, cupo: 1, duracion: "60 minutos", slot: "AM", tipo: "1:1" },
+    { codigo: "E5-90-PM", profesor: "Sofía Ruiz", horario: "Vie 19:00 (PM)", participantes: 1, cupo: 4, duracion: "90 minutos", slot: "PM", tipo: "2 Alumnos" }
+  ];
+
+  var dt = null;
+
+  function filtrarYMostrar() {
+    var pref = $('#prefGrupo').val();
+    var duracion = $('#duracion').val();
+    var slots = [];
+    if ($('#slotAM').is(':checked')) slots.push('AM');
+    if ($('#slotPM').is(':checked')) slots.push('PM');
+    if ($('#slotNoche').is(':checked')) slots.push('Noche');
+
+    var filtrados = $.grep(grupos, function (g) {
+      var matchTipo = (pref === '1:1') ? (g.cupo === 1 || g.tipo === '1:1') : (g.tipo === pref);
+      var matchDur = g.duracion === duracion;
+      var matchSlot = slots.length ? $.inArray(g.slot, slots) !== -1 : true;
+      var hayCupo = g.participantes < g.cupo;
+      return matchTipo && matchDur && matchSlot && hayCupo;
+    });
+
+    $('#resultados').removeClass('d-none');
+    var tbody = $('#gruposTable tbody');
+    tbody.empty();
+
+    $.each(filtrados, function (i, g) {
+      var row = `
+        <tr>
+          <td>${g.codigo}</td>
+          <td>${g.profesor}</td>
+          <td>${g.horario}</td>
+          <td>${g.participantes}</td>
+          <td>${g.cupo}</td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-success btn-seleccionar" data-codigo="${g.codigo}">
+              <i class="fas fa-check"></i> Seleccionar
+            </button>
+          </td>
+        </tr>`;
+      tbody.append(row);
+    });
+
+    if (dt) { dt.clear().destroy(); }
+    dt = $('#gruposTable').DataTable({
+      paging: false,
+      searching: false,
+      info: false,
+      language: {
+        url: 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/es-MX.json'
+      }
+    });
+  }
+
+  $(function () {
+    $('#formMuestra').submit(function (e) {
+      e.preventDefault();
+      filtrarYMostrar();
+    });
+
+    $('#btnNuevoGrupo').click(function () {
+      Swal.fire('Nuevo Grupo', 'Aquí abriremos el formulario para crear un grupo.', 'info');
+    });
+
+    $(document).on('click', '.btn-seleccionar', function () {
+      var codigo = $(this).data('codigo');
+      var alumno = ($('#nombre').val() + ' ' + $('#ap1').val() + ' ' + $('#ap2').val()).trim();
+
+      Swal.fire({
+        title: 'Confirmar asignación',
+        html: `¿Asignar al alumno <b>${alumno || '(sin nombre)'}</b> al grupo <b>${codigo}</b>?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, asignar',
+        cancelButtonText: 'Cancelar'
+      }).then(function (result) {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: 'Asignando...',
+            html: 'Por favor espera',
+            allowOutsideClick: false,
+            didOpen: function () {
+              Swal.showLoading();
+            }
+          });
+
+          setTimeout(function () {
+            Swal.fire({
+              icon: 'success',
+              title: 'Alumno asignado exitosamente',
+              confirmButtonText: 'Aceptar'
+            }).then(function () {
+              $('#main-content').load('clases-muestra.html');
+            });
+          }, 1500);
+        }
+      });
+    });
+  });
+
+
+</script>

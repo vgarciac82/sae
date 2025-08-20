@@ -1,0 +1,171 @@
+
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">Facturación Alumnos</h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+    <button id="btnGenerarFacturas" class="btn btn-primary mb-3">Generar Facturas</button>
+    <div class="table-responsive">
+      <table id="tablaFacturacion" class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Alumno</th>
+            <th>Grupo</th>
+            <th>Paquete</th>
+            <th>Clases a Cobrar</th>
+            <th>Clases a Favor</th>
+            <th>Total Clases</th>
+            <th>Alumnos x Grupo</th>
+            <th>Importe</th>
+            <th>Estatus</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyFacturacion"></tbody>
+      </table>
+    </div>
+
+    <div class="mt-4">
+      <h5>Resumen por Cupo de Grupo</h5>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered w-100" id="tablaResumen">
+          <thead>
+            <tr>
+              <th>Cupo Grupo</th>
+              <th>Alumnos</th>
+              <th>Reposiciones</th>
+              <th>Total Clases</th>
+              <th>Importe</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyResumen"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+  const alumnos = [
+    { nombre: "Angela Romero", grupo: "A1", paquete: 8, clasesCobrar: 8, clasesFavor: 0, alumnosGrupo: 2 },
+    { nombre: "David López", grupo: "B2", paquete: 4, clasesCobrar: 4, clasesFavor: 1, alumnosGrupo: 4 },
+    { nombre: "Laura Herrera", grupo: "A1", paquete: 8, clasesCobrar: 8, clasesFavor: 0, alumnosGrupo: 2 },
+    { nombre: "Carlos Méndez", grupo: "C3", paquete: 4, clasesCobrar: 4, clasesFavor: 0, alumnosGrupo: 1 }
+  ];
+
+  const costoClase = 35.00;
+
+  function cargarTabla() {
+    const tbody = document.getElementById('tbodyFacturacion');
+    tbody.innerHTML = '';
+    alumnos.forEach((alumno, index) => {
+      const totalClases = alumno.clasesCobrar - alumno.clasesFavor;
+      const importe = ((costoClase / alumno.alumnosGrupo) * totalClases).toFixed(2);
+      tbody.innerHTML += `
+        <tr>
+          <td>${alumno.nombre}</td>
+          <td>${alumno.grupo}</td>
+          <td>${alumno.paquete} clases/mes</td>
+          <td><input type="number" value="${alumno.clasesCobrar}" class="form-control form-control-sm" onchange="actualizar(${index}, 'clasesCobrar', this.value)" /></td>
+          <td><input type="number" value="${alumno.clasesFavor}" class="form-control form-control-sm" onchange="actualizar(${index}, 'clasesFavor', this.value)" /></td>
+          <td id="total-${index}">${totalClases}</td>
+          <td>${alumno.alumnosGrupo}</td>
+          <td id="importe-${index}">$${importe}</td>
+          <td id="estatus-${index}"><span class="badge badge-warning">Pendiente</span></td>
+           <td class="text-center">
+            <a href="factura-ejemplo.html" target="_blank" class="text-primary" title="Ver Factura">
+              <i class="fas fa-eye"></i>
+            </a>
+            <a href="factura-ejemplo.html" download class="text-success mr-2" title="Descargar Factura">
+              <i class="fas fa-file-download"></i>
+            </a>
+            <a href="#" class="text-danger mr-2" title="Cancelar Factura">
+              <i class="fas fa-ban"></i>
+            </a>
+            <a href="#" class="text-warning" title="Regenerar Factura">
+              <i class="fas fa-sync-alt"></i>
+            </a>
+
+          </td>
+
+        </tr>
+      `;
+    });
+
+    $('#tablaFacturacion').DataTable({
+      paging: false,
+      searching: false,
+      info: false,
+      ordering: false,
+      responsive: true,
+      destroy: true,
+      dom: 'Bfrtip',
+      buttons: ['excelHtml5', 'pdfHtml5'],
+      language: {
+        url: 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/es-MX.json'
+      }
+    });
+
+    cargarResumen();
+  }
+
+  function actualizar(index, campo, valor) {
+    alumnos[index][campo] = parseInt(valor);
+    const totalClases = alumnos[index].clasesCobrar - alumnos[index].clasesFavor;
+    const importe = ((costoClase / alumnos[index].alumnosGrupo) * totalClases).toFixed(2);
+    document.getElementById(`total-${index}`).textContent = totalClases;
+    document.getElementById(`importe-${index}`).textContent = `$${importe}`;
+    cargarResumen();
+  }
+
+  function cargarResumen() {
+    const resumen = {};
+    alumnos.forEach(a => {
+      const key = a.alumnosGrupo;
+      if (!resumen[key]) {
+        resumen[key] = { alumnos: 0, reposiciones: 0, totalClases: 0, importe: 0 };
+      }
+      const totalClases = a.clasesCobrar - a.clasesFavor;
+      resumen[key].alumnos += 1;
+      resumen[key].reposiciones += a.clasesFavor;
+      resumen[key].totalClases += totalClases;
+      resumen[key].importe += (costoClase / a.alumnosGrupo) * totalClases;
+    });
+
+    const tbody = document.getElementById('tbodyResumen');
+    tbody.innerHTML = '';
+    Object.keys(resumen).sort((a, b) => b - a).forEach(cupo => {
+      const r = resumen[cupo];
+      tbody.innerHTML += `
+        <tr>
+          <td>${cupo}</td>
+          <td>${r.alumnos}</td>
+          <td>${r.reposiciones}</td>
+          <td>${r.totalClases}</td>
+          <td>$${r.importe.toFixed(2)}</td>
+        </tr>
+      `;
+    });
+  }
+
+  document.getElementById('btnGenerarFacturas').addEventListener('click', () => {
+    $.blockUI({ message: '<h3>Generando y enviando facturas...</h3>' });
+    setTimeout(() => {
+      alumnos.forEach((_, i) => {
+        document.getElementById(`estatus-${i}`).innerHTML = '<span class="badge badge-success">Factura Enviada</span>';
+      });
+      $.unblockUI();
+    }, 10000);
+  });
+
+  cargarTabla();
+</script>

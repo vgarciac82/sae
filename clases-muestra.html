@@ -1,0 +1,85 @@
+
+<div class="wrapper hold-transition sidebar-mini">
+  <section class="content p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="mb-0">Clases Muestra</h2>
+      <button class="btn btn-primary" onclick="$('#main-content').load('agendar-clase-muestra.html')">
+        <i class="fas fa-plus"></i> Agendar Nueva Clase Muestra
+      </button>
+    </div>
+    <div class="table-responsive">
+      <table id="tablaClasesMuestra" class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Alumno</th>
+            <th>Fecha</th>
+            <th>Tipo Grupo</th>
+            <th>Profesor</th>
+            <th>Idioma</th>
+            <th>Estatus</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Carlos Liu</td>
+            <td>2025-09-10 17:00</td>
+            <td>1:1</td>
+            <td>María Torres</td>
+            <td>Inglés</td>
+            <td><span class="badge badge-warning">Pendiente</span></td>
+            <td>
+              <button class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#modalActualizarEstatus">
+                <i class="fas fa-sync-alt" title="Actualizar estatus"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-info">
+                <i class="fas fa-eye" title="Ver detalles"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger">
+                <i class="fas fa-trash" title="Eliminar clase"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Modal actualizar estatus -->
+  <div class="modal fade" id="modalActualizarEstatus" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Actualizar Estatus</h5>
+          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="form-group">
+              <label>Nuevo estatus</label>
+              <select class="form-control" required>
+                <option>Clase Reagendada</option>
+                <option>Clase No Tomada</option>
+                <option>Clase Realizada</option>
+                <option>Declinada</option>
+                <option>Inscripción Finalizada</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Comentarios</label>
+              <textarea class="form-control" rows="3"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary">Guardar Cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  $(document).ready(function () {
+    $('#tablaClasesMuestra').DataTable();
+  });
+</script>
