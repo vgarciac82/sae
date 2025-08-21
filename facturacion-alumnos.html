@@ -1,171 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Facturación Alumnos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<div class="content-header">
-  <div class="container-fluid">
-    <div class="row mb-2">
-      <div class="col-sm-6">
-        <h1 class="m-0">Facturación Alumnos</h1>
+  <!-- CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap4.min.css">
+</head>
+<body class="hold-transition">
+
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">Facturación Alumnos</h1>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<div class="content">
-  <div class="container-fluid">
-    <button id="btnGenerarFacturas" class="btn btn-primary mb-3">Generar Facturas</button>
-    <div class="table-responsive">
-      <table id="tablaFacturacion" class="table table-bordered table-striped">
-        <thead>
-          <tr>
-            <th>Alumno</th>
-            <th>Grupo</th>
-            <th>Paquete</th>
-            <th>Clases a Cobrar</th>
-            <th>Clases a Favor</th>
-            <th>Total Clases</th>
-            <th>Alumnos x Grupo</th>
-            <th>Importe</th>
-            <th>Estatus</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyFacturacion"></tbody>
-      </table>
-    </div>
+  <div class="content">
+    <div class="container-fluid">
+      <button id="btnGenerarFacturas" class="btn btn-primary mb-3">
+        <i class="fas fa-file-invoice-dollar mr-1"></i> Generar Facturas
+      </button>
 
-    <div class="mt-4">
-      <h5>Resumen por Cupo de Grupo</h5>
       <div class="table-responsive">
-        <table class="table table-sm table-bordered w-100" id="tablaResumen">
-          <thead>
+        <table id="tablaFacturacion" class="table table-bordered table-striped w-100">
+          <thead class="thead-light">
             <tr>
-              <th>Cupo Grupo</th>
-              <th>Alumnos</th>
-              <th>Reposiciones</th>
+              <th>Alumno</th>
+              <th>Grupo</th>
+              <th>Paquete</th>
+              <th>Clases a Cobrar</th>
+              <th>Clases a Favor</th>
               <th>Total Clases</th>
+              <th>Alumnos x Grupo</th>
               <th>Importe</th>
+              <th>Estatus</th>
+              <th style="width:120px;">Acciones</th>
             </tr>
           </thead>
-          <tbody id="tbodyResumen"></tbody>
+          <tbody id="tbodyFacturacion"></tbody>
         </table>
+      </div>
+
+      <div class="mt-4">
+        <h5>Resumen por Cupo de Grupo</h5>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered w-100" id="tablaResumen">
+            <thead class="thead-light">
+              <tr>
+                <th>Cupo Grupo</th>
+                <th>Alumnos</th>
+                <th>Reposiciones</th>
+                <th>Total Clases</th>
+                <th>Importe</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyResumen"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
+  <!-- JS (orden unificado) -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
 
+  <!-- DataTables + Buttons -->
+  <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap4.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap4.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 
-<script>
-  const alumnos = [
-    { nombre: "Angela Romero", grupo: "A1", paquete: 8, clasesCobrar: 8, clasesFavor: 0, alumnosGrupo: 2 },
-    { nombre: "David López", grupo: "B2", paquete: 4, clasesCobrar: 4, clasesFavor: 1, alumnosGrupo: 4 },
-    { nombre: "Laura Herrera", grupo: "A1", paquete: 8, clasesCobrar: 8, clasesFavor: 0, alumnosGrupo: 2 },
-    { nombre: "Carlos Méndez", grupo: "C3", paquete: 4, clasesCobrar: 4, clasesFavor: 0, alumnosGrupo: 1 }
-  ];
+  <!-- blockUI -->
+  <script src="https://cdn.jsdelivr.net/npm/block-ui@2.70.0/jquery.blockUI.min.js"></script>
 
-  const costoClase = 35.00;
+  <script>
+    // =========================
+    // Datos Mock
+    // =========================
+    const alumnos = [
+      { nombre: "Angela Romero", grupo: "A1", paquete: 8, clasesCobrar: 8, clasesFavor: 0, alumnosGrupo: 2 },
+      { nombre: "David López",  grupo: "B2", paquete: 4, clasesCobrar: 4, clasesFavor: 1, alumnosGrupo: 4 },
+      { nombre: "Laura Herrera", grupo: "A1", paquete: 8, clasesCobrar: 8, clasesFavor: 0, alumnosGrupo: 2 },
+      { nombre: "Carlos Méndez", grupo: "C3", paquete: 4, clasesCobrar: 4, clasesFavor: 0, alumnosGrupo: 1 }
+    ];
+    const costoClase = 35.00; // USD demo
 
-  function cargarTabla() {
-    const tbody = document.getElementById('tbodyFacturacion');
-    tbody.innerHTML = '';
-    alumnos.forEach((alumno, index) => {
-      const totalClases = alumno.clasesCobrar - alumno.clasesFavor;
-      const importe = ((costoClase / alumno.alumnosGrupo) * totalClases).toFixed(2);
-      tbody.innerHTML += `
-        <tr>
-          <td>${alumno.nombre}</td>
-          <td>${alumno.grupo}</td>
-          <td>${alumno.paquete} clases/mes</td>
-          <td><input type="number" value="${alumno.clasesCobrar}" class="form-control form-control-sm" onchange="actualizar(${index}, 'clasesCobrar', this.value)" /></td>
-          <td><input type="number" value="${alumno.clasesFavor}" class="form-control form-control-sm" onchange="actualizar(${index}, 'clasesFavor', this.value)" /></td>
-          <td id="total-${index}">${totalClases}</td>
-          <td>${alumno.alumnosGrupo}</td>
-          <td id="importe-${index}">$${importe}</td>
-          <td id="estatus-${index}"><span class="badge badge-warning">Pendiente</span></td>
-           <td class="text-center">
-            <a href="factura-ejemplo.html" target="_blank" class="text-primary" title="Ver Factura">
-              <i class="fas fa-eye"></i>
-            </a>
-            <a href="factura-ejemplo.html" download class="text-success mr-2" title="Descargar Factura">
-              <i class="fas fa-file-download"></i>
-            </a>
-            <a href="#" class="text-danger mr-2" title="Cancelar Factura">
-              <i class="fas fa-ban"></i>
-            </a>
-            <a href="#" class="text-warning" title="Regenerar Factura">
-              <i class="fas fa-sync-alt"></i>
-            </a>
-
-          </td>
-
-        </tr>
-      `;
-    });
-
-    $('#tablaFacturacion').DataTable({
-      paging: false,
-      searching: false,
-      info: false,
-      ordering: false,
-      responsive: true,
-      destroy: true,
-      dom: 'Bfrtip',
-      buttons: ['excelHtml5', 'pdfHtml5'],
-      language: {
-        url: 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/es-MX.json'
-      }
-    });
-
-    cargarResumen();
-  }
-
-  function actualizar(index, campo, valor) {
-    alumnos[index][campo] = parseInt(valor);
-    const totalClases = alumnos[index].clasesCobrar - alumnos[index].clasesFavor;
-    const importe = ((costoClase / alumnos[index].alumnosGrupo) * totalClases).toFixed(2);
-    document.getElementById(`total-${index}`).textContent = totalClases;
-    document.getElementById(`importe-${index}`).textContent = `$${importe}`;
-    cargarResumen();
-  }
-
-  function cargarResumen() {
-    const resumen = {};
-    alumnos.forEach(a => {
-      const key = a.alumnosGrupo;
-      if (!resumen[key]) {
-        resumen[key] = { alumnos: 0, reposiciones: 0, totalClases: 0, importe: 0 };
-      }
-      const totalClases = a.clasesCobrar - a.clasesFavor;
-      resumen[key].alumnos += 1;
-      resumen[key].reposiciones += a.clasesFavor;
-      resumen[key].totalClases += totalClases;
-      resumen[key].importe += (costoClase / a.alumnosGrupo) * totalClases;
-    });
-
-    const tbody = document.getElementById('tbodyResumen');
-    tbody.innerHTML = '';
-    Object.keys(resumen).sort((a, b) => b - a).forEach(cupo => {
-      const r = resumen[cupo];
-      tbody.innerHTML += `
-        <tr>
-          <td>${cupo}</td>
-          <td>${r.alumnos}</td>
-          <td>${r.reposiciones}</td>
-          <td>${r.totalClases}</td>
-          <td>$${r.importe.toFixed(2)}</td>
-        </tr>
-      `;
-    });
-  }
-
-  document.getElementById('btnGenerarFacturas').addEventListener('click', () => {
-    $.blockUI({ message: '<h3>Generando y enviando facturas...</h3>' });
-    setTimeout(() => {
-      alumnos.forEach((_, i) => {
-        document.getElementById(`estatus-${i}`).innerHTML = '<span class="badge badge-success">Factura Enviada</span>';
+    // =========================
+    // Render tabla principal
+    // =========================
+    function cargarTabla() {
+      const tbody = document.getElementById('tbodyFacturacion');
+      tbody.innerHTML = '';
+      alumnos.forEach((alumno, index) => {
+        const totalClases = alumno.clasesCobrar - alumno.clasesFavor;
+        const importe = ((costoClase / alumno.alumnosGrupo) * totalClases).toFixed(2);
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td>${alumno.nombre}</td>
+            <td>${alumno.grupo}</td>
+            <td>${alumno.paquete} clases/mes</td>
+            <td><input type="number" value="${alumno.clasesCobrar}" min="0" class="form-control form-control-sm" onchange="actualizar(${index}, 'clasesCobrar', this.value)" /></td>
+            <td><input type="number" value="${alumno.clasesFavor}" min="0" class="form-control form-control-sm" onchange="actualizar(${index}, 'clasesFavor', this.value)" /></td>
+            <td id="total-${index}">${totalClases}</td>
+            <td>${alumno.alumnosGrupo}</td>
+            <td id="importe-${index}">$${importe}</td>
+            <td id="estatus-${index}"><span class="badge badge-warning">Pendiente</span></td>
+            <td class="text-center text-nowrap">
+              <a href="factura-ejemplo.html" target="_blank" class="text-primary mr-3" title="Ver Factura"><i class="fas fa-eye"></i></a>
+              <a href="factura-ejemplo.html" download class="text-success mr-3" title="Descargar Factura"><i class="fas fa-file-download"></i></a>
+              <a href="#" class="text-danger mr-3" title="Cancelar Factura" onclick="cambiarEstatus(${index}, 'Cancelada')"><i class="fas fa-ban"></i></a>
+              <a href="#" class="text-warning" title="Regenerar Factura" onclick="cambiarEstatus(${index}, 'Pendiente')"><i class="fas fa-sync-alt"></i></a>
+            </td>
+          </tr>
+        `);
       });
-      $.unblockUI();
-    }, 10000);
-  });
 
-  cargarTabla();
-</script>
+      // (Re)inicializa DataTable
+      $('#tablaFacturacion').DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        responsive: true,
+        destroy: true,
+        dom: 'Bfrtip',
+        buttons: [
+          { extend: 'excelHtml5', title: 'Facturacion_Alumnos' },
+          { extend: 'pdfHtml5', title: 'Facturacion_Alumnos', orientation: 'landscape', pageSize: 'A4' }
+        ],
+        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/es-MX.json' }
+      });
+
+      cargarResumen();
+    }
+
+    // =========================
+    // Actualiza totales por fila
+    // =========================
+    function actualizar(index, campo, valor) {
+      const v = parseInt(valor, 10);
+      alumnos[index][campo] = isNaN(v) ? 0 : v;
+      const totalClases = alumnos[index].clasesCobrar - alumnos[index].clasesFavor;
+      const importe = ((costoClase / alumnos[index].alumnosGrupo) * totalClases).toFixed(2);
+      document.getElementById(`total-${index}`).textContent = totalClases;
+      document.getElementById(`importe-${index}`).textContent = `$${importe}`;
+      cargarResumen();
+    }
+
+    // =========================
+    // Resumen por cupo de grupo
+    // =========================
+    function cargarResumen() {
+      const resumen = {};
+      alumnos.forEach(a => {
+        const key = a.alumnosGrupo;
+        if (!resumen[key]) resumen[key] = { alumnos: 0, reposiciones: 0, totalClases: 0, importe: 0 };
+        const totalClases = a.clasesCobrar - a.clasesFavor;
+        resumen[key].alumnos += 1;
+        resumen[key].reposiciones += a.clasesFavor;
+        resumen[key].totalClases += totalClases;
+        resumen[key].importe += (costoClase / a.alumnosGrupo) * totalClases;
+      });
+
+      const tbody = document.getElementById('tbodyResumen');
+      tbody.innerHTML = '';
+      Object.keys(resumen).sort((a, b) => b - a).forEach(cupo => {
+        const r = resumen[cupo];
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td>${cupo}</td>
+            <td>${r.alumnos}</td>
+            <td>${r.reposiciones}</td>
+            <td>${r.totalClases}</td>
+            <td>$${r.importe.toFixed(2)}</td>
+          </tr>
+        `);
+      });
+    }
+
+    // =========================
+    // Estatus helper
+    // =========================
+    function cambiarEstatus(i, nuevo) {
+      const badge =
+        nuevo === 'Cancelada' ? '<span class="badge badge-danger">Cancelada</span>' :
+        nuevo === 'Factura Enviada' ? '<span class="badge badge-success">Factura Enviada</span>' :
+        '<span class="badge badge-warning">Pendiente</span>';
+      document.getElementById(`estatus-${i}`).innerHTML = badge;
+    }
+
+    // =========================
+    // Acciones
+    // =========================
+    function generar() {
+      $.blockUI({ message: '<h4>Generando y enviando facturas...</h4>' });
+      setTimeout(() => {
+        alumnos.forEach((_, i) => cambiarEstatus(i, 'Factura Enviada'));
+        $.unblockUI();
+      }, 2000); // demo más ágil
+    }
+
+    // =========================
+    // Init
+    // =========================
+    $(function () {
+      cargarTabla();
+      $('#btnGenerarFacturas').on('click', generar);
+    });
+  </script>
+</body>
+</html>

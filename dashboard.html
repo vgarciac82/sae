@@ -1,4 +1,22 @@
-<div class="content-wrapper">
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard - Administrador</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- AdminLTE + dependencias -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+</head>
+
+<body class="hold-transition">
   <div class="content-header">
     <div class="container-fluid">
       <div class="row mb-2">
@@ -68,18 +86,18 @@
               <tbody>
                 <tr>
                   <td>08:00</td>
-                  <td><span data-toggle="tooltip" title="Maestro: Juan Pérez\nAlumnos: 12">A1</span></td>
+                  <td><span data-toggle="tooltip" title="Maestro: Juan Pérez&#10;Alumnos: 12">A1</span></td>
                 </tr>
                 <tr>
                   <td>09:00</td>
                   <td>
-                    <span data-toggle="tooltip" title="Maestro: Juan Pérez\nAlumnos: 12">A1</span>,
-                    <span data-toggle="tooltip" title="Maestra: Ana Gómez\nAlumnos: 15">B2</span>
+                    <span data-toggle="tooltip" title="Maestro: Juan Pérez&#10;Alumnos: 12">A1</span>,
+                    <span data-toggle="tooltip" title="Maestra: Ana Gómez&#10;Alumnos: 15">B2</span>
                   </td>
                 </tr>
                 <tr>
                   <td>10:00</td>
-                  <td><span data-toggle="tooltip" title="Maestra: Ana Gómez\nAlumnos: 15">B2</span></td>
+                  <td><span data-toggle="tooltip" title="Maestra: Ana Gómez&#10;Alumnos: 15">B2</span></td>
                 </tr>
                 <tr>
                   <td>11:00</td>
@@ -87,7 +105,7 @@
                 </tr>
                 <tr>
                   <td>12:00</td>
-                  <td><span data-toggle="tooltip" title="Maestro: Luis Torres\nAlumnos: 10">C3</span></td>
+                  <td><span data-toggle="tooltip" title="Maestro: Luis Torres&#10;Alumnos: 10">C3</span></td>
                 </tr>
               </tbody>
             </table>
@@ -101,19 +119,19 @@
         </div>
         <div class="card-body">
           <div class="btn-group btn-group-toggle d-flex flex-wrap justify-content-around" data-toggle="buttons">
-            <a href="#" class="btn btn-outline-primary m-2" onclick="$('#main-content').load('agendar-clase-muestra.html')">
+            <a href="agendar-clase-muestra.html" class="btn btn-outline-primary m-2">
               <i class="fas fa-calendar-plus mr-2"></i> Agendar Clase Muestra
             </a>
-            <a href="#" class="btn btn-outline-success m-2">
+            <a href="facturacion-alumnos.html" class="btn btn-outline-success m-2">
               <i class="fas fa-file-invoice-dollar mr-2"></i> Generar Facturas
             </a>
-            <a href="#" class="btn btn-outline-info m-2">
+            <a href="inscripcion-alumno.html" class="btn btn-outline-info m-2">
               <i class="fas fa-user-plus mr-2"></i> Inscripción Nuevo Alumno
             </a>
-            <a href="#" class="btn btn-outline-warning m-2">
+            <a href="clases-grupales.html" class="btn btn-outline-warning m-2">
               <i class="fas fa-calendar-alt mr-2"></i> Programar Clases Grupales
             </a>
-            <a href="#" class="btn btn-outline-secondary m-2">
+            <a href="reportes.html" class="btn btn-outline-secondary m-2">
               <i class="fas fa-chart-pie mr-2"></i> Ver Reportes
             </a>
           </div>
@@ -127,10 +145,11 @@
       </div>
     </div>
   </div>
-</div>
-</div>
-<script>
-  $(function () {
-    $('[data-toggle="tooltip"]').tooltip();
-  });
-</script>
+
+  <script>
+    $(function () {
+      $('[data-toggle="tooltip"]').tooltip();
+    });
+  </script>
+</body>
+</html>

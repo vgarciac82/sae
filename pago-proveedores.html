@@ -1,4 +1,19 @@
-<div class="wrapper hold-transition sidebar-mini">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pago a Proveedores</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap4.min.css" />
+</head>
+
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
   <section class="content pt-4 px-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h2 class="mb-0">Pago a Proveedores</h2>
@@ -6,16 +21,17 @@
         <i class="fas fa-plus"></i> Registrar Pago Pendiente
       </button>
     </div>
+
     <div class="table-responsive">
-      <table id="tablaProveedores" class="table table-bordered table-striped">
-        <thead>
+      <table id="tablaProveedores" class="table table-bordered table-striped w-100">
+        <thead class="thead-light">
           <tr>
             <th>N° Proveedor</th>
             <th>Nombre</th>
             <th>Concepto</th>
             <th>Fecha Límite</th>
             <th>Importe</th>
-            <th>Acciones</th>
+            <th style="width:140px;">Acciones</th>
           </tr>
         </thead>
         <tbody id="tbodyProveedores"></tbody>
@@ -23,182 +39,225 @@
     </div>
   </section>
 
-  <!-- Modal para registrar nuevo pago pendiente -->
-  <div class="modal fade" id="modalNuevoPago" tabindex="-1" role="dialog" aria-labelledby="modalNuevoPagoLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Registrar Nuevo Pago Pendiente</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <form id="formNuevoPago">
-            <div class="form-group">
-              <label>Nombre del Proveedor</label>
-              <input type="text" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label>Concepto</label>
-              <input type="text" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label>Importe</label>
-              <input type="number" step="0.01" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label>Fecha Límite de Pago</label>
-              <input type="date" class="form-control" required>
-            </div>
-            <div class="form-group">
-              <label>Periodicidad</label>
-              <select class="form-control" required>
-                <option>Mensual</option>
-                <option>Semanal</option>
-                <option>Anual</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>CLABE Interbancaria</label>
-              <input type="text" class="form-control">
-            </div>
-            <div class="form-group">
-              <label>Método de Pago</label>
-              <input type="text" class="form-control">
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary" form="formNuevoPago">Guardar</button>
-        </div>
+  <!-- Modal: Nuevo pago pendiente -->
+  <div class="modal fade" id="modalNuevoPago" tabindex="-1" role="dialog" aria-labelledby="modalNuevoPagoLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document"><div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Registrar Nuevo Pago Pendiente</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
       </div>
-    </div>
+      <div class="modal-body">
+        <form id="formNuevoPago">
+          <div class="form-group">
+            <label>Nombre del Proveedor</label>
+            <input type="text" class="form-control" id="npNombre" required>
+          </div>
+          <div class="form-group">
+            <label>Concepto</label>
+            <input type="text" class="form-control" id="npConcepto" required>
+          </div>
+          <div class="form-group">
+            <label>Importe</label>
+            <input type="number" step="0.01" class="form-control" id="npImporte" required>
+          </div>
+          <div class="form-group">
+            <label>Fecha Límite de Pago</label>
+            <input type="date" class="form-control" id="npFecha" required>
+          </div>
+          <div class="form-group">
+            <label>Periodicidad</label>
+            <select class="form-control" id="npPeriodicidad" required>
+              <option>Mensual</option>
+              <option>Semanal</option>
+              <option>Anual</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>CLABE Interbancaria</label>
+            <input type="text" class="form-control" id="npClabe" maxlength="18">
+          </div>
+          <div class="form-group">
+            <label>Método de Pago</label>
+            <input type="text" class="form-control" id="npMetodo">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary" form="formNuevoPago">Guardar</button>
+      </div>
+    </div></div>
   </div>
 
-  <!-- Modal: Ver historial de pagos anteriores -->
-  <div aria-hidden="true" aria-labelledby="modalHistorialPagosLabel" class="modal fade" id="modalHistorialPagos"
-    role="dialog" tabindex="-1">
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Historial de Pagos del Proveedor</h5>
-          <button aria-label="Cerrar" class="close" data-dismiss="modal" type="button">
-            <span aria-hidden="true">×</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <table class="table table-bordered">
-            <thead class="thead-light">
-              <tr>
-                <th>Fecha</th>
-                <th>Concepto</th>
-                <th>Importe</th>
-                <th>Referencia</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>2025-07-10</td>
-                <td>Servicio de Internet</td>
-                <td>$1,200.00</td>
-                <td>BNTR123456789</td>
-              </tr>
-              <tr>
-                <td>2025-06-10</td>
-                <td>Servicio de Internet</td>
-                <td>$1,200.00</td>
-                <td>BNTR987654321</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+  <!-- Modal: Historial -->
+  <div class="modal fade" id="modalHistorialPagos" tabindex="-1" role="dialog" aria-labelledby="modalHistorialPagosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document"><div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Historial de Pagos del Proveedor</h5>
+        <button class="close" data-dismiss="modal" aria-label="Cerrar" type="button"><span aria-hidden="true">&times;</span></button>
       </div>
-    </div>
+      <div class="modal-body">
+        <table class="table table-bordered">
+          <thead class="thead-light">
+            <tr>
+              <th>Fecha</th>
+              <th>Concepto</th>
+              <th>Importe</th>
+              <th>Referencia</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyHistorial">
+            <tr><td>2025-07-10</td><td>Servicio de Internet</td><td>$1,200.00</td><td>BNTR123456789</td></tr>
+            <tr><td>2025-06-10</td><td>Servicio de Internet</td><td>$1,200.00</td><td>BNTR987654321</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div></div>
   </div>
+
   <!-- Modal: Registrar Pago -->
-  <div aria-hidden="true" aria-labelledby="modalRegistrarPagoLabel" class="modal fade" id="modalRegistrarPago"
-    role="dialog" tabindex="-1">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Registrar Pago</h5>
-          <button aria-label="Cerrar" class="close" data-dismiss="modal" type="button">
-            <span aria-hidden="true">×</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <form>
-            <div class="form-group">
-              <label>Referencia de Pago</label>
-              <input class="form-control" placeholder="Ej. BNTR123456789" type="text" />
-            </div>
-            <div class="form-group">
-              <label>Fecha del Pago</label>
-              <input class="form-control" type="date" />
-            </div>
-            <div class="form-group">
-              <label>Observaciones</label>
-              <textarea class="form-control" rows="2"></textarea>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-primary">Guardar</button>
-        </div>
+  <div class="modal fade" id="modalRegistrarPago" tabindex="-1" role="dialog" aria-labelledby="modalRegistrarPagoLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document"><div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Registrar Pago</h5>
+        <button class="close" data-dismiss="modal" aria-label="Cerrar" type="button"><span aria-hidden="true">&times;</span></button>
       </div>
-    </div>
+      <div class="modal-body">
+        <form id="formRegistrarPago">
+          <div class="form-group">
+            <label>Referencia de Pago</label>
+            <input class="form-control" id="rpReferencia" placeholder="Ej. BNTR123456789" type="text" required />
+          </div>
+          <div class="form-group">
+            <label>Fecha del Pago</label>
+            <input class="form-control" id="rpFecha" type="date" required />
+          </div>
+          <div class="form-group">
+            <label>Observaciones</label>
+            <textarea class="form-control" id="rpObs" rows="2"></textarea>
+          </div>
+          <input type="hidden" id="rpFila">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" form="formRegistrarPago" type="submit">Guardar</button>
+      </div>
+    </div></div>
   </div>
-  <div class="mt-4">
+
+  <div class="mt-4 px-4">
     <div class="card bg-light">
       <div class="card-body d-flex justify-content-between align-items-center">
         <div>
           <h5 class="mb-1">Resumen de Pagos del Mes</h5>
           <small>Total de pagos registrados este mes</small>
         </div>
-        <h3 class="text-success mb-0">$1,650.00</h3>
+        <h3 class="text-success mb-0" id="resumenMes">$1,650.00</h3>
       </div>
     </div>
   </div>
 </div>
 
-
-
+<!-- JS (orden unificado) -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap4.min.js"></script>
 
 <script>
-  $(document).ready(function () {
+  // ====== Demo data inicial ======
+  const ejemplo = [
+    ["001", "Distribuidora X", "Servicio de Internet", "2025-08-20", "$1,200.00"],
+    ["002", "Papelería ABC",  "Material Oficina",     "2025-08-25", "$450.00"]
+  ];
 
-    const ejemplo = [
-      ["001", "Distribuidora X", "Servicio de Internet", "2025-08-20", "$1,200.00"],
-      ["002", "Papelería ABC", "Material Oficina", "2025-08-25", "$450.00"]
-    ];
+  // ====== Render tabla y handlers ======
+  $(function () {
+    // Pinta filas iniciales
+    const $tb = $('#tbodyProveedores');
     ejemplo.forEach(p => {
-      $('#tbodyProveedores').append(`
-      <tr>
-        <td>${p[0]}</td>
-        <td>${p[1]}</td>
-        <td>${p[2]}</td>
-        <td>${p[3]}</td>
-        <td>${p[4]}</td>
-        <td>
-          <button class="btn btn-sm btn-outline-success btn-registrar-pago" title="Registrar Pago"><i class="fas fa-dollar-sign"></i></button>
-          <button class="btn btn-sm btn-outline-info btn-ver-historial" title="Ver Pagos Anteriores"><i class="fas fa-history"></i></button>
-        </td>
-      </tr>
-    `);
+      $tb.append(`
+        <tr>
+          <td>${p[0]}</td>
+          <td>${p[1]}</td>
+          <td>${p[2]}</td>
+          <td>${p[3]}</td>
+          <td>${p[4]}</td>
+          <td class="text-nowrap">
+            <button class="btn btn-sm btn-outline-success btn-registrar-pago" title="Registrar Pago"><i class="fas fa-dollar-sign"></i></button>
+            <button class="btn btn-sm btn-outline-info btn-ver-historial" title="Ver Pagos Anteriores"><i class="fas fa-history"></i></button>
+          </td>
+        </tr>
+      `);
     });
-    $('#tablaProveedores').DataTable();
+
+    // DataTable (es-MX)
+    $('#tablaProveedores').DataTable({
+      paging: false,
+      searching: false,
+      info: false,
+      ordering: true,
+      language: { url: 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/es-MX.json' }
+    });
+
+    // Clicks de acciones
     $(document).on("click", ".btn-registrar-pago", function () {
+      const fila = $(this).closest('tr')[0];
+      const idx = $('#tablaProveedores').DataTable().row(fila).index();
+      $('#rpFila').val(idx);
       $('#modalRegistrarPago').modal('show');
     });
+
     $(document).on("click", ".btn-ver-historial", function () {
       $('#modalHistorialPagos').modal('show');
     });
+
+    // Guardar nuevo pendiente
+    $('#formNuevoPago').on('submit', function (e) {
+      e.preventDefault();
+      const idProv = String(Date.now()).slice(-3); // demo id
+      const nombre = $('#npNombre').val();
+      const concepto = $('#npConcepto').val();
+      const importe = Number($('#npImporte').val() || 0).toLocaleString('es-MX', { style:'currency', currency:'MXN' });
+      const fecha   = $('#npFecha').val();
+
+      const rowHtml = `
+        <tr>
+          <td>${idProv}</td>
+          <td>${nombre}</td>
+          <td>${concepto}</td>
+          <td>${fecha}</td>
+          <td>${importe}</td>
+          <td class="text-nowrap">
+            <button class="btn btn-sm btn-outline-success btn-registrar-pago" title="Registrar Pago"><i class="fas fa-dollar-sign"></i></button>
+            <button class="btn btn-sm btn-outline-info btn-ver-historial" title="Ver Pagos Anteriores"><i class="fas fa-history"></i></button>
+          </td>
+        </tr>`;
+      const dt = $('#tablaProveedores').DataTable();
+      dt.row.add($(rowHtml)).draw(false);
+
+      $('#modalNuevoPago').modal('hide');
+      this.reset();
+    });
+
+    // Guardar pago realizado
+    $('#formRegistrarPago').on('submit', function (e) {
+      e.preventDefault();
+      const ref = $('#rpReferencia').val().trim();
+      const fec = $('#rpFecha').val();
+      const idx = Number($('#rpFila').val());
+      if (isNaN(idx)) return;
+
+      // En una versión real: actualizar estatus/columna; en demo, solo feedback
+      $('#modalRegistrarPago').modal('hide');
+      this.reset();
+
+      // Toast simple con Bootstrap
+      $('<div class="alert alert-success alert-dismissible fade show mx-4 mt-3" role="alert">Pago registrado: <b>'
+        + ref + '</b> (' + fec + ')<button type="button" class="close" data-dismiss="alert">&times;</button></div>')
+        .appendTo('.wrapper').delay(2500).fadeOut(400, function(){ $(this).remove(); });
+    });
   });
-
-
-
-
-
 </script>
+</body>
+</html>

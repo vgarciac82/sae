@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Módulo Grupos — Demo</title>
+
+  <!-- AdminLTE + Bootstrap + Fonts -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs4@1.13.6/css/dataTables.bootstrap4.min.css">
+  <style>
+    .modal-lg { max-width: 900px; }
+    .badge-status { font-size: 0.85rem; }
+    .small-muted { font-size: .85rem; color: #6c757d; }
+  </style>
+</head>
+<body class="hold-transition">
+
+<section class="content pt-3">
+  <div class="container-fluid">
+
+    <div class="card card-outline card-primary">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title mb-0"><i class="fas fa-users mr-2"></i>Grupos</h3>
+        <ul class="nav nav-pills">
+          <li class="nav-item"><a class="nav-link active" href="#tab-cursos" data-toggle="tab"><i class="fas fa-book mr-1"></i>Cursos</a></li>
+          <li class="nav-item"><a class="nav-link" href="#tab-grupos" data-toggle="tab"><i class="fas fa-users mr-1"></i>Grupos</a></li>
+        </ul>
+      </div>
+      <div class="card-body">
+        <div class="tab-content">
+
+          <!-- CURSOS -->
+          <div class="tab-pane active" id="tab-cursos">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="mb-0">Catálogo de cursos</h5>
+              <button class="btn btn-primary btn-sm" id="btnNuevoCurso"><i class="fas fa-plus mr-1"></i>Nuevo curso</button>
+            </div>
+            <table id="tblCursos" class="table table-sm table-striped table-bordered" style="width:100%">
+              <thead class="thead-light">
+                <tr>
+                  <th>Código</th>
+                  <th>Nombre</th>
+                  <th>Descripción</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <p class="small-muted mb-0">Nota: aunque hoy solo se oferta <strong>Chino</strong>, este catálogo está listo para crecer sin rehacer el módulo.</p>
+          </div>
+
+          <!-- GRUPOS -->
+          <div class="tab-pane" id="tab-grupos">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="mb-0">Gestión de grupos</h5>
+              <div>
+                <button class="btn btn-primary btn-sm" id="btnNuevoGrupo"><i class="fas fa-plus mr-1"></i>Nuevo grupo</button>
+                <button class="btn btn-outline-secondary btn-sm" id="btnRefrescarGrupos"><i class="fas fa-sync-alt mr-1"></i>Refrescar</button>
+              </div>
+            </div>
+            <table id="tblGrupos" class="table table-sm table-striped table-bordered" style="width:100%">
+              <thead class="thead-light">
+                <tr>
+                  <th>Código</th>
+                  <th>Curso</th>
+                  <th>Nivel</th>
+                  <th>Profesor</th>
+                  <th>Cap.</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Modales -->
+<div class="modal fade" id="modalCurso" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><span id="tituloCurso">Nuevo curso</span></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="frmCurso">
+          <div class="form-group">
+            <label for="curCodigo">Código</label>
+            <input type="text" class="form-control" id="curCodigo" maxlength="20" required>
+          </div>
+          <div class="form-group">
+            <label for="curNombre">Nombre</label>
+            <input type="text" class="form-control" id="curNombre" required>
+          </div>
+          <div class="form-group">
+            <label for="curDesc">Descripción</label>
+            <textarea class="form-control" id="curDesc" rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="curEstado">Estado</label>
+            <select class="form-control" id="curEstado">
+              <option>Activo</option>
+              <option>Inactivo</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-primary" id="btnGuardarCurso">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalGrupo" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><span id="tituloGrupo">Nuevo grupo</span></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="frmGrupo">
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label for="grpCodigo">Código</label>
+              <input type="text" class="form-control" id="grpCodigo" maxlength="20" required>
+            </div>
+            <div class="form-group col-md-4">
+              <label for="grpCurso">Curso</label>
+              <select class="form-control" id="grpCurso"></select>
+            </div>
+            <div class="form-group col-md-4">
+              <label for="grpNivel">Nivel</label>
+              <select class="form-control" id="grpNivel">
+                <option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-3">
+              <label for="grpModalidad">Modalidad</label>
+              <select class="form-control" id="grpModalidad">
+                <option>En línea</option>
+                <option>Presencial</option>
+              </select>
+            </div>
+            <div class="form-group col-md-3">
+              <label for="grpCapacidad">Capacidad</label>
+              <input type="number" class="form-control" id="grpCapacidad" min="1" value="12">
+            </div>
+            <div class="form-group col-md-3">
+              <label for="grpEstado">Estado</label>
+              <select class="form-control" id="grpEstado">
+                <option>Activo</option>
+                <option>Inactivo</option>
+              </select>
+            </div>
+            <div class="form-group col-md-3">
+              <label for="grpProfesor">Profesor (titular)</label>
+              <input type="text" class="form-control" id="grpProfesor" placeholder="Asignar desde horarios" disabled>
+            </div>
+          </div>
+
+          <div class="card card-light">
+            <div class="card-header py-2">
+              <strong><i class="far fa-clock mr-1"></i>Horarios base</strong>
+              <button type="button" class="btn btn-xs btn-outline-primary float-right" id="btnAgregarFranja"><i class="fas fa-plus"></i> Agregar franja</button>
+            </div>
+            <div class="card-body p-2">
+              <div class="table-responsive">
+                <table class="table table-sm table-bordered mb-0" id="tblFranjas">
+                  <thead class="thead-light">
+                    <tr>
+                      <th>Día</th><th>Inicio</th><th>Fin</th><th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <div class="mt-2 d-flex">
+                <button type="button" class="btn btn-outline-info btn-sm mr-2" id="btnVerProfesDisponibles">
+                  <i class="fas fa-user-check mr-1"></i> Ver profesores disponibles
+                </button>
+                <button type="button" class="btn btn-outline-success btn-sm" id="btnPublicarCalendario">
+                  <i class="fas fa-calendar-check mr-1"></i> Publicar al Calendario
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-primary" id="btnGuardarGrupo">Guardar grupo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalProfes" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Profesores disponibles</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table id="tblProfes" class="table table-sm table-striped table-bordered" style="width:100%">
+          <thead class="thead-light">
+            <tr>
+              <th>Profesor</th>
+              <th>Niveles</th>
+              <th>Ventanas disponibles</th>
+              <th>Carga (hrs)</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-bs4@1.13.6/js/dataTables.bootstrap4.min.js"></script>
+
+<script>
+// ================================
+// Mock data
+// ================================
+const cursos = [
+  { codigo: "CHN-001", nombre: "Chino Básico", descripcion: "Fundamentos del idioma chino mandarín (A1-A2).", estado: "Activo" },
+  { codigo: "CHN-002", nombre: "Chino Intermedio", descripcion: "Consolidación de habilidades (B1-B2).", estado: "Activo" }
+];
+
+const niveles = ["A1","A2","B1","B2","C1","C2"];
+
+const profesores = [
+  {
+    id: 1, nombre: "Juan Pérez", niveles: ["A1","A2"],
+    disponibilidad: { "Lun":[["18:00","21:00"]], "Mie":[["19:00","21:00"]] },
+    asignaciones: [ { dia: "Lun", inicio: "19:30", fin: "20:30", grupo: "CHN-A1-TAR" } ],
+    cargaSemanal: 4, activo: true
+  },
+  {
+    id: 2, nombre: "Ana Gómez", niveles: ["B1","B2"],
+    disponibilidad: { "Mar":[["19:00","21:00"]], "Jue":[["19:00","21:00"]] },
+    asignaciones: [ { dia: "Mar", inicio: "19:00", fin: "20:00", grupo: "CHN-B2-NOC" } ],
+    cargaSemanal: 3, activo: true
+  },
+  {
+    id: 3, nombre: "Luis Torres", niveles: ["A1","B2"],
+    disponibilidad: { "Sab":[["10:00","14:00"]] },
+    asignaciones: [ { dia: "Sab", inicio: "12:00", fin: "13:00", grupo: "CHN-A1-VE" } ],
+    cargaSemanal: 2, activo: true
+  },
+  {
+    id: 4, nombre: "Mei Lin", niveles: ["A2","B1","B2"],
+    disponibilidad: { "Lun":[["07:00","09:00"]], "Mie":[["07:00","09:00"]], "Vie":[["19:00","21:00"]] },
+    asignaciones: [], cargaSemanal: 1, activo: true
+  }
+];
+
+let grupos = [
+  {
+    codigo: "CHN-A1-VE", curso: "CHN-001", nivel: "A1", modalidad: "En línea",
+    capacidad: 15, estado: "Activo", profesorId: 3,
+    franjas: [ { dia:"Sab", inicio:"10:00", fin:"12:00" } ]
+  },
+  {
+    codigo: "CHN-B2-NOC", curso: "CHN-002", nivel: "B2", modalidad: "En línea",
+    capacidad: 12, estado: "Activo", profesorId: 2,
+    franjas: [ { dia:"Mar", inicio:"19:00", fin:"20:00" }, { dia:"Jue", inicio:"19:00", fin:"20:00" } ]
+  }
+];
+
+// ================================
+// Helpers
+// ================================
+const diasSemana = ["Lun","Mar","Mie","Jue","Vie","Sab","Dom"];
+
+function timeToMinutes(t) { const [h,m] = t.split(":").map(Number); return h*60+m; }
+
+function rangesOverlap(aStart, aEnd, bStart, bEnd) {
+  return Math.max(aStart, bStart) < Math.min(aEnd, bEnd);
+}
+
+function validarSolapes(franjas) {
+  // franjas: [{dia,inicio,fin}]
+  for (let i=0;i<franjas.length;i++) {
+    for (let j=i+1;j<franjas.length;j++) {
+      if (franjas[i].dia === franjas[j].dia) {
+        const A1 = timeToMinutes(franjas[i].inicio);
+        const A2 = timeToMinutes(franjas[i].fin);
+        const B1 = timeToMinutes(franjas[j].inicio);
+        const B2 = timeToMinutes(franjas[j].fin);
+        if (rangesOverlap(A1,A2,B1,B2)) return false;
+      }
+    }
+  }
+  return true;
+}
+
+function ventanaIncluye(dispoVentanas, inicio, fin) {
+  // dispoVentanas: [["18:00","21:00"], ...]
+  const I = timeToMinutes(inicio), F = timeToMinutes(fin);
+  return dispoVentanas.some(v => timeToMinutes(v[0]) <= I && timeToMinutes(v[1]) >= F);
+}
+
+function profesorDisponibleEnRanjas(prof, franjas) {
+  // 1) Está habilitado en el nivel
+  // 2) Cada franja cabe en su disponibilidad del día
+  // 3) No se empalma con sus asignaciones
+  for (const fr of franjas) {
+    const dispoDia = prof.disponibilidad[fr.dia] || [];
+    if (!ventanaIncluye(dispoDia, fr.inicio, fr.fin)) return false;
+    for (const asg of prof.asignaciones) {
+      if (asg.dia === fr.dia) {
+        if (rangesOverlap(timeToMinutes(fr.inicio), timeToMinutes(fr.fin),
+                          timeToMinutes(asg.inicio), timeToMinutes(asg.fin))) {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
+function nombreProfesor(id) {
+  const p = profesores.find(x => x.id===id);
+  return p ? p.nombre : "—";
+}
+
+// ================================
+let dtCursos, dtGrupos, dtProfes;
+let editCursoIndex = null;
+let editGrupoIndex = null;
+let franjasTemp = []; // buffer mientras se edita/crea grupo
+
+// ================================
+// Init
+// ================================
+$(function() {
+  // DataTables idioma es_mx (ligero)
+  const lang = {
+    sProcessing: "Procesando...", sLengthMenu: "Mostrar _MENU_ registros",
+    sZeroRecords: "No se encontraron resultados", sEmptyTable: "Sin datos disponibles",
+    sInfo: "Mostrando _START_ a _END_ de _TOTAL_", sInfoEmpty: "Mostrando 0 a 0 de 0",
+    sInfoFiltered: "(filtrado de _MAX_ totales)", sSearch: "Buscar:",
+    oPaginate: { sFirst:"Primero", sLast:"Último", sNext:"Siguiente", sPrevious:"Anterior" }
+  };
+
+  // Cursos
+  dtCursos = $('#tblCursos').DataTable({
+    data: cursos,
+    columns: [
+      { data: 'codigo' },
+      { data: 'nombre' },
+      { data: 'descripcion' },
+      { data: 'estado', render: s => s==='Activo'
+          ? '<span class="badge badge-success badge-status">Activo</span>'
+          : '<span class="badge badge-secondary badge-status">Inactivo</span>' },
+      { data: null, orderable:false, render: (_,__,row,meta) => `
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-info btnEditarCurso" data-index="${meta.row}"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-outline-danger btnEliminarCurso" data-index="${meta.row}"><i class="fas fa-trash"></i></button>
+          </div>` }
+    ],
+    language: lang
+  });
+
+  // Grupos
+  dtGrupos = $('#tblGrupos').DataTable({
+    data: grupos,
+    columns: [
+      { data: 'codigo' },
+      { data: 'curso' },
+      { data: 'nivel' },
+      { data: 'profesorId', render: d => nombreProfesor(d) },
+      { data: 'capacidad' },
+      { data: 'estado', render: s => s==='Activo'
+          ? '<span class="badge badge-success badge-status">Activo</span>'
+          : '<span class="badge badge-secondary badge-status">Inactivo</span>' },
+      { data: null, orderable:false, render: (_,__,row,meta) => `
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-info btnEditarGrupo" data-index="${meta.row}" title="Editar"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-outline-warning btnHorariosGrupo" data-index="${meta.row}" title="Horarios"><i class="far fa-clock"></i></button>
+            <button class="btn btn-outline-secondary btnDuplicarGrupo" data-index="${meta.row}" title="Duplicar"><i class="far fa-copy"></i></button>
+            <button class="btn btn-outline-danger btnEliminarGrupo" data-index="${meta.row}" title="Eliminar"><i class="fas fa-trash"></i></button>
+          </div>` }
+    ],
+    language: lang
+  });
+
+  // Botones cursos
+  $('#btnNuevoCurso').on('click', () => { editCursoIndex = null; $('#tituloCurso').text('Nuevo curso'); $('#frmCurso')[0].reset(); $('#curEstado').val('Activo'); $('#modalCurso').modal('show'); });
+  $('#tblCursos').on('click','.btnEditarCurso', function(){ editCursoIndex = +$(this).data('index'); const c = cursos[editCursoIndex];
+    $('#tituloCurso').text('Editar curso'); $('#curCodigo').val(c.codigo); $('#curNombre').val(c.nombre); $('#curDesc').val(c.descripcion); $('#curEstado').val(c.estado); $('#modalCurso').modal('show'); });
+  $('#tblCursos').on('click','.btnEliminarCurso', function(){
+    const idx = +$(this).data('index'); const c = cursos[idx];
+    Swal.fire({icon:'warning', title:'Eliminar curso', html:`¿Eliminar <b>${c.codigo}</b>?`, showCancelButton:true, confirmButtonText:'Sí, eliminar'})
+     .then(r=>{ if(r.isConfirmed){ cursos.splice(idx,1); dtCursos.clear().rows.add(cursos).draw(); Swal.fire('Eliminado','Curso eliminado','success'); }});
+  });
+  $('#btnGuardarCurso').on('click', () => {
+    const codigo = $('#curCodigo').val().trim();
+    const nombre = $('#curNombre').val().trim();
+    if(!codigo || !nombre){ Swal.fire('Campos requeridos','Código y Nombre son obligatorios','info'); return; }
+    const nuevo = { codigo, nombre, descripcion: $('#curDesc').val().trim(), estado: $('#curEstado').val() };
+    // unico
+    const existe = cursos.some((c,i)=>c.codigo===codigo && i!==editCursoIndex);
+    if(existe){ Swal.fire('Código duplicado','Ya existe un curso con ese código','warning'); return; }
+    if(editCursoIndex==null){ cursos.push(nuevo); } else { cursos[editCursoIndex]=nuevo; }
+    dtCursos.clear().rows.add(cursos).draw(); $('#modalCurso').modal('hide');
+  });
+
+  // Botones grupos
+  $('#btnNuevoGrupo').on('click', () => abrirGrupoModal(null));
+  $('#btnRefrescarGrupos').on('click', () => dtGrupos.clear().rows.add(grupos).draw());
+  $('#tblGrupos').on('click','.btnEditarGrupo', function(){ const idx = +$(this).data('index'); abrirGrupoModal(idx); });
+  $('#tblGrupos').on('click','.btnDuplicarGrupo', function(){
+    const idx = +$(this).data('index'); const g = grupos[idx];
+    const nuevo = JSON.parse(JSON.stringify(g));
+    nuevo.codigo = g.codigo + '-COPY';
+    grupos.push(nuevo);
+    dtGrupos.clear().rows.add(grupos).draw();
+    Swal.fire('Duplicado','Se creó una copia del grupo','success');
+  });
+  $('#tblGrupos').on('click','.btnEliminarGrupo', function(){
+    const idx = +$(this).data('index'); const g = grupos[idx];
+    Swal.fire({icon:'warning', title:'Eliminar grupo', html:`¿Eliminar <b>${g.codigo}</b>?`, showCancelButton:true, confirmButtonText:'Sí, eliminar'})
+     .then(r=>{ if(r.isConfirmed){ grupos.splice(idx,1); dtGrupos.clear().rows.add(grupos).draw(); Swal.fire('Eliminado','Grupo eliminado','success'); }});
+  });
+  $('#tblGrupos').on('click','.btnHorariosGrupo', function(){
+    const idx = +$(this).data('index');
+    abrirGrupoModal(idx, true); // abre en pestaña horarios
+  });
+
+  // Eventos de modal grupo
+  $('#btnAgregarFranja').on('click', () => agregarFranjaFila({dia:'Lun', inicio:'19:00', fin:'20:00'}));
+  $('#btnVerProfesDisponibles').on('click', mostrarProfesDisponibles);
+  $('#btnPublicarCalendario').on('click', () => Swal.fire('Publicado','Se simuló la publicación al calendario','success'));
+  $('#btnGuardarGrupo').on('click', guardarGrupo);
+
+  // Llenar select curso en grupo
+  recargarSelectCursos();
+});
+
+function recargarSelectCursos(){
+  const $sel = $('#grpCurso');
+  $sel.empty();
+  cursos.forEach(c => $sel.append(`<option value="${c.codigo}">${c.codigo} - ${c.nombre}</option>`));
+}
+
+function abrirGrupoModal(idx, abrirHorarios=false){
+  editGrupoIndex = idx;
+  $('#tituloGrupo').text(idx==null ? 'Nuevo grupo' : 'Editar grupo');
+  $('#frmGrupo')[0].reset();
+  recargarSelectCursos();
+  franjasTemp = [];
+
+  if(idx==null){
+    $('#grpCodigo').val('');
+    $('#grpProfesor').val('');
+    renderTablaFranjas();
+  } else {
+    const g = grupos[idx];
+    $('#grpCodigo').val(g.codigo);
+    $('#grpCurso').val(g.curso);
+    $('#grpNivel').val(g.nivel);
+    $('#grpModalidad').val(g.modalidad);
+    $('#grpCapacidad').val(g.capacidad);
+    $('#grpEstado').val(g.estado);
+    $('#grpProfesor').val(nombreProfesor(g.profesorId));
+    franjasTemp = JSON.parse(JSON.stringify(g.franjas||[]));
+    renderTablaFranjas();
+  }
+  $('#modalGrupo').modal('show');
+}
+
+function renderTablaFranjas(){
+  const $tb = $('#tblFranjas tbody');
+  $tb.empty();
+  if(franjasTemp.length===0){
+    $tb.append(`<tr><td colspan="4" class="text-center text-muted">Sin franjas definidas</td></tr>`);
+    return;
+  }
+  franjasTemp.forEach((f, i) => {
+    $tb.append(`<tr>
+      <td>
+        <select class="form-control form-control-sm selDia" data-index="${i}">
+          ${diasSemana.map(d => `<option ${d===f.dia?'selected':''}>${d}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="time" class="form-control form-control-sm inpInicio" data-index="${i}" value="${f.inicio}"></td>
+      <td><input type="time" class="form-control form-control-sm inpFin" data-index="${i}" value="${f.fin}"></td>
+      <td class="text-nowrap">
+        <button class="btn btn-xs btn-outline-danger" onclick="eliminarFranja(${i})"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`);
+  });
+
+  // listeners
+  $('.selDia').off('change').on('change', function(){ const i = +$(this).data('index'); franjasTemp[i].dia = $(this).val(); });
+  $('.inpInicio').off('change').on('change', function(){ const i = +$(this).data('index'); franjasTemp[i].inicio = $(this).val(); });
+  $('.inpFin').off('change').on('change', function(){ const i = +$(this).data('index'); franjasTemp[i].fin = $(this).val(); });
+}
+
+function agregarFranjaFila(franja){ franjasTemp.push(franja); renderTablaFranjas(); }
+function eliminarFranja(i){ franjasTemp.splice(i,1); renderTablaFranjas(); }
+
+function guardarGrupo(){
+  const g = {
+    codigo: $('#grpCodigo').val().trim(),
+    curso: $('#grpCurso').val(),
+    nivel: $('#grpNivel').val(),
+    modalidad: $('#grpModalidad').val(),
+    capacidad: +$('#grpCapacidad').val(),
+    estado: $('#grpEstado').val(),
+    profesorId: null,
+    franjas: JSON.parse(JSON.stringify(franjasTemp))
+  };
+  if(!g.codigo){ Swal.fire('Código requerido','El código del grupo es obligatorio','info'); return; }
+  if(g.capacidad<=0){ Swal.fire('Capacidad inválida','La capacidad debe ser mayor a 0','warning'); return; }
+  // validar solapes internos
+  if(!validarSolapes(g.franjas)){ Swal.fire('Conflicto en horarios','Hay solapamientos dentro de las franjas del grupo','error'); return; }
+
+  // Unicidad del código
+  const existe = grupos.some((x,i)=>x.codigo===g.codigo && i!==editGrupoIndex);
+  if(existe){ Swal.fire('Código duplicado','Ya existe un grupo con ese código','warning'); return; }
+
+  // Si se está editando, preservar profesor asignado si no hay conflicto
+  if(editGrupoIndex!=null){
+    const anterior = grupos[editGrupoIndex];
+    g.profesorId = anterior.profesorId || null;
+  }
+
+  if(editGrupoIndex==null){ grupos.push(g); } else { grupos[editGrupoIndex]=g; }
+  dtGrupos.clear().rows.add(grupos).draw();
+  $('#grpProfesor').val(nombreProfesor(g.profesorId));
+  Swal.fire('Guardado','Grupo guardado en memoria (demo)','success');
+}
+
+function mostrarProfesDisponibles(){
+  if(franjasTemp.length===0){ Swal.fire('Definir horarios','Agrega al menos una franja antes de asignar','info'); return; }
+  // validar solapes internos primero
+  if(!validarSolapes(franjasTemp)){ Swal.fire('Conflicto','Corrige los solapamientos primero','error'); return; }
+
+  const nivel = $('#grpNivel').val();
+  const disponibles = profesores.filter(p =>
+    p.activo && p.niveles.includes(nivel) && profesorDisponibleEnRanjas(p, franjasTemp)
+  ).sort((a,b)=> a.cargaSemanal - b.cargaSemanal);
+
+  // Render tabla
+  if(dtProfes){ dtProfes.destroy(); }
+  const rows = disponibles.map(p => ({
+    profesor: p.nombre,
+    niveles: p.niveles.join(", "),
+    ventanas: Object.keys(p.disponibilidad).map(d => `${d}: ${p.disponibilidad[d].map(v=>v[0]+'-'+v[1]).join(' / ')}`).join('<br>'),
+    carga: p.cargaSemanal,
+    id: p.id
+  }));
+
+  dtProfes = $('#tblProfes').DataTable({
+    data: rows,
+    columns: [
+      { data: 'profesor' },
+      { data: 'niveles' },
+      { data: 'ventanas' },
+      { data: 'carga' },
+      { data: null, orderable:false, render: (_,__,row)=> `<button class="btn btn-xs btn-success btnAsignarProf" data-id="${row.id}"><i class="fas fa-check"></i> Asignar</button>` }
+    ],
+    language: {
+      sProcessing: "Procesando...", sLengthMenu: "Mostrar _MENU_ registros",
+      sZeroRecords: "No hay profesores disponibles", sEmptyTable: "Sin datos",
+      sInfo: "Mostrando _START_ a _END_ de _TOTAL_", sInfoEmpty: "Mostrando 0 a 0 de 0",
+      sInfoFiltered: "(filtrado de _MAX_ totales)", sSearch: "Buscar:",
+      oPaginate: { sFirst:"Primero", sLast:"Último", sNext:"Siguiente", sPrevious:"Anterior" }
+    },
+    destroy: true
+  });
+
+  $('#modalProfes').modal('show');
+
+  $('#tblProfes').off('click','.btnAsignarProf').on('click','.btnAsignarProf', function(){
+    const id = +$(this).data('id');
+    // Asignar en el buffer del grupo que se está editando
+    if(editGrupoIndex==null){
+      // nuevo grupo: solo actualizar input visual, se setea al guardar
+      const p = profesores.find(x=>x.id===id);
+      $('#grpProfesor').val(p? p.nombre : '');
+      // para persistir en memoria, guardaremos profesor al confirmar guardar grupo
+      $('#btnGuardarGrupo').off('click.asig').on('click.asig', function(){
+        // hook para asignar profesor al guardar
+        const idx = grupos.findIndex(x=>x.codigo === $('#grpCodigo').val().trim());
+        if(idx>=0){ grupos[idx].profesorId = id; }
+      });
+    } else {
+      grupos[editGrupoIndex].profesorId = id;
+      $('#grpProfesor').val(nombreProfesor(id));
+      dtGrupos.clear().rows.add(grupos).draw();
+    }
+    $('#modalProfes').modal('hide');
+    Swal.fire('Asignado','Profesor asignado (demo)','success');
+  });
+}
+</script>
+
+</body>
+</html>

@@ -1,21 +1,34 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
   <meta charset="UTF-8">
   <title>Pago a Profesores</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap4.min.css">
 </head>
 
 <body class="hold-transition sidebar-mini">
   <div class="wrapper">
     <section class="content pt-4 px-4">
       <h2 class="mb-4">Pago a Profesores</h2>
-      <button class="btn btn-success mb-3" onclick="generarLayout()">Generar Layout Bancario</button>
+
+      <div class="d-flex align-items-center mb-3">
+        <button class="btn btn-success mr-2" onclick="generarLayout()">
+          <i class="fas fa-file-csv mr-1"></i> Generar Layout Bancario
+        </button>
+        <button class="btn btn-outline-primary" onclick="recalcularTodo()">
+          <i class="fas fa-sync-alt mr-1"></i> Recalcular Totales
+        </button>
+      </div>
+
       <div class="table-responsive">
-        <table id="tablaPagos" class="table table-bordered table-striped">
-          <thead>
+        <table id="tablaPagos" class="table table-bordered table-striped w-100">
+          <thead class="thead-light">
             <tr>
               <th>Profesor</th>
               <th>Semana</th>
@@ -26,16 +39,17 @@
               <th>% Pago</th>
               <th>Total a Pagar</th>
               <th>Estatus</th>
-              <th>Acciones</th>
+              <th style="width: 90px;">Acciones</th>
             </tr>
           </thead>
           <tbody id="tbodyPagos"></tbody>
         </table>
       </div>
+
       <div class="mt-4">
         <h5>Resumen semanal por profesor</h5>
         <div class="table-responsive">
-          <table class="table table-bordered" id="resumenProfesores">
+          <table class="table table-bordered w-100" id="resumenProfesores">
             <thead class="thead-light">
               <tr>
                 <th>Profesor</th>
@@ -53,74 +67,103 @@
           </table>
         </div>
       </div>
-
     </section>
 
     <!-- Modal para pago manual -->
-    <div class="modal fade" id="modalPago" tabindex="-1" role="dialog" aria-labelledby="modalPagoLabel"
-      aria-hidden="true">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Registrar Pago Manual</h5>
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
-          </div>
-          <div class="modal-body">
-            <form id="formPago">
-              <div class="form-group">
-                <label>Referencia de Pago</label>
-                <input type="text" class="form-control" id="referenciaPago" required>
-              </div>
-              <div class="form-group">
-                <label>Fecha del Pago</label>
-                <input type="date" class="form-control" id="fechaPago" required>
-              </div>
-              <input type="hidden" id="filaActual">
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-primary" form="formPago">Guardar</button>
-          </div>
+    <div class="modal fade" id="modalPago" tabindex="-1" role="dialog" aria-labelledby="modalPagoLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document"><div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Registrar Pago Manual</h5>
+          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
         </div>
-      </div>
+        <div class="modal-body">
+          <form id="formPago">
+            <div class="form-group">
+              <label>Referencia de Pago</label>
+              <input type="text" class="form-control" id="referenciaPago" required>
+            </div>
+            <div class="form-group">
+              <label>Fecha del Pago</label>
+              <input type="date" class="form-control" id="fechaPago" required>
+            </div>
+            <input type="hidden" id="filaActual">
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary" form="formPago">Guardar</button>
+        </div>
+      </div></div>
     </div>
   </div>
 
+  <!-- JS (orden unificado) -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap4.min.js"></script>
 
   <script>
+    // =========================
+    // Mock data
+    // =========================
     const profesores = [
-      { nombre: "Ana Gómez", semana: "33", grupo: "A1", cupo: 4, clases: 5, ingreso: 140, clabe: "012345678901234567", banco: "Banorte" },
+      { nombre: "Ana Gómez",  semana: "33", grupo: "A1", cupo: 4, clases: 5, ingreso: 140, clabe: "012345678901234567", banco: "Banorte" },
       { nombre: "Luis Torres", semana: "33", grupo: "C3", cupo: 1, clases: 3, ingreso: 210, clabe: "002345678901234567", banco: "BBVA" }
     ];
-    const porcentajePago = 0.4;
+    const porcentajePago = 0.40; // 40%
 
+    // =========================
+    // Helpers de formato
+    // =========================
+    const fmtMoney = v => `$${Number(v).toFixed(2)}`;
+
+    // =========================
+    // Render de tabla principal
+    // =========================
     function cargarTabla() {
       const tbody = $("#tbodyPagos");
       tbody.empty();
+
       profesores.forEach((p, i) => {
         const total = (p.ingreso * porcentajePago).toFixed(2);
         const estatus = '<span class="badge badge-warning">Pendiente</span>';
         const acciones = `
-      <button class="btn btn-sm btn-outline-primary" onclick="abrirModal(${i})" title="Registrar Pago">
-        <i class="fas fa-credit-card"></i>
-      </button>`;
+          <button class="btn btn-sm btn-outline-primary" onclick="abrirModal(${i})" title="Registrar Pago">
+            <i class="fas fa-credit-card"></i>
+          </button>
+        `;
         tbody.append(`
-      <tr>
-        <td>${p.nombre}</td>
-        <td>${p.semana}</td>
-        <td>${p.grupo}</td>
-        <td>${p.cupo}</td>
-        <td>${p.clases}</td>
-        <td>$${p.ingreso.toFixed(2)}</td>
-        <td>40%</td>
-        <td>$${total}</td>
-        <td id="estatus-${i}">${estatus}</td>
-        <td>${acciones}</td>
-      </tr>`);
+          <tr>
+            <td>${p.nombre}</td>
+            <td>${p.semana}</td>
+            <td>${p.grupo}</td>
+            <td>${p.cupo}</td>
+            <td>${p.clases}</td>
+            <td>${fmtMoney(p.ingreso)}</td>
+            <td>40%</td>
+            <td class="text-right">${fmtMoney(total)}</td>
+            <td id="estatus-${i}">${estatus}</td>
+            <td class="text-center">${acciones}</td>
+          </tr>
+        `);
       });
-      $('#tablaPagos').DataTable();
+
+      // DataTable (re)init
+      $('#tablaPagos').DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        responsive: true,
+        destroy: true,
+        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/es-MX.json' }
+      });
     }
 
+    // =========================
+    // Modal
+    // =========================
     function abrirModal(i) {
       $('#filaActual').val(i);
       $('#modalPago').modal('show');
@@ -129,13 +172,48 @@
     $('#formPago').on('submit', function (e) {
       e.preventDefault();
       const i = $('#filaActual').val();
-      const ref = $('#referenciaPago').val();
+      const ref = $('#referenciaPago').val().trim();
       const fecha = $('#fechaPago').val();
       $(`#estatus-${i}`).html(`<span class="badge badge-success">Pagado</span><br><small>${ref}</small><br><small>${fecha}</small>`);
       $('#modalPago').modal('hide');
-      $('#formPago')[0].reset();
+      this.reset();
+      calcularResumen(); // refresca totales
     });
 
+    // =========================
+    // Resumen por profesor
+    // =========================
+    function calcularResumen() {
+      const resumen = {};
+      let granTotal = 0;
+
+      profesores.forEach(p => {
+        const totalPagar = p.ingreso * porcentajePago;
+        if (!resumen[p.nombre]) resumen[p.nombre] = { clases: 0, total: 0 };
+        resumen[p.nombre].clases += p.clases;
+        resumen[p.nombre].total  += totalPagar;
+        granTotal += totalPagar;
+      });
+
+      const tbody = document.getElementById("tbodyResumen");
+      tbody.innerHTML = "";
+      Object.keys(resumen).forEach(nombre => {
+        const r = resumen[nombre];
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td>${nombre}</td>
+            <td>${r.clases}</td>
+            <td class="text-right">${fmtMoney(r.total)}</td>
+          </tr>
+        `);
+      });
+
+      document.getElementById("granTotal").textContent = fmtMoney(granTotal);
+    }
+
+    // =========================
+    // Export CSV (layout bancario)
+    // =========================
     function generarLayout() {
       let csv = "Nombre,CLABE,Banco,Importe\n";
       profesores.forEach(p => {
@@ -147,44 +225,24 @@
       link.href = URL.createObjectURL(blob);
       link.download = "layout-pagos.csv";
       link.click();
+      URL.revokeObjectURL(link.href);
     }
 
-    $(document).ready(cargarTabla);
-
-
-    function calcularResumen() {
-      const resumen = {};
-      let granTotal = 0;
-      profesores.forEach(p => {
-        const totalPagar = (p.ingreso * porcentajePago).toFixed(2);
-        if (!resumen[p.nombre]) {
-          resumen[p.nombre] = { clases: 0, total: 0 };
-        }
-        resumen[p.nombre].clases += p.clases;
-        resumen[p.nombre].total += parseFloat(totalPagar);
-        granTotal += parseFloat(totalPagar);
-      });
-
-      const tbody = document.getElementById("tbodyResumen");
-      tbody.innerHTML = "";
-      Object.keys(resumen).forEach(nombre => {
-        const r = resumen[nombre];
-        tbody.innerHTML += `
-      <tr>
-        <td>${nombre}</td>
-        <td>${r.clases}</td>
-        <td>$${r.total.toFixed(2)}</td>
-      </tr>`;
-      });
-
-      document.getElementById("granTotal").textContent = "$" + granTotal.toFixed(2);
+    // =========================
+    // Utilidad: recalcular todo
+    // =========================
+    function recalcularTodo() {
+      cargarTabla();
+      calcularResumen();
     }
 
-    $(document).ready(() => {
+    // =========================
+    // Init
+    // =========================
+    $(function () {
+      cargarTabla();
       calcularResumen();
     });
-
   </script>
 </body>
-
 </html>

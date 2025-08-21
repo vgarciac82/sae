@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <title>Reportes y Estadísticas (v2)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+  <!-- AdminLTE 3 + Bootstrap 4 + FontAwesome -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+
+  <!-- DataTables -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-dt@1.13.8/css/jquery.dataTables.min.css">
+
+  <style>
+    .toolbar { display:flex; flex-wrap:wrap; gap:.75rem; align-items:center; }
+    .toolbar .search { flex:1 1 280px; min-width:260px; }
+    .kpi .info-box-number{ font-size:1.4rem; }
+    .badge-switch { opacity:.6; }
+    .table-sm td, .table-sm th{ padding:.45rem .5rem; }
+    /* Fijar altura para evitar bucles de redimensionamiento */
+    .chart-wrapper { position: relative; min-height: 260px; }
+    .chart-wrapper canvas { height: 240px !important; }
+  </style>
+</head>
+<body class="hold-transition">
+
+<section class="content-header">
+  <div class="container-fluid">
+    <h1 class="m-0 mb-2"><i class="fas fa-chart-line mr-2"></i>Reportes y Estadísticas</h1>
+    <div class="card">
+      <div class="card-body toolbar">
+        <div class="input-group search">
+          <div class="input-group-prepend"><span class="input-group-text"><i class="far fa-calendar-alt"></i></span></div>
+          <select id="selMes" class="form-control" title="Mes"></select>
+          <select id="selAnio" class="form-control" title="Año" style="max-width:120px"></select>
+        </div>
+
+        <select id="selGrupo" class="form-control" title="Grupo" style="min-width:200px">
+          <option value="">Todos los grupos</option>
+        </select>
+
+        <select id="selEstatus" class="form-control" title="Estatus alumno" style="min-width:200px">
+          <option value="">Todos los estatus</option>
+          <option>ACTIVO</option>
+          <option>INACTIVO</option>
+          <option>BAJA</option>
+        </select>
+
+        <div class="ml-auto d-flex align-items-center" title="Solo si hay API de Zoom">
+          <span class="mr-2 text-muted small">Puntualidad (opcional)</span>
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="swPuntualidad" disabled>
+            <label class="custom-control-label badge-switch" for="swPuntualidad">Deshabilitado</label>
+          </div>
+        </div>
+
+        <div class="btn-group ml-2">
+          <button class="btn btn-outline-info dropdown-toggle" data-toggle="dropdown">
+            <i class="fas fa-file-export mr-2"></i>Exportar
+          </button>
+          <div class="dropdown-menu dropdown-menu-right">
+            <a class="dropdown-item" href="#" id="expPdf"><i class="far fa-file-pdf mr-2"></i>PDF (Resumen)</a>
+            <a class="dropdown-item" href="#" id="expCsv"><i class="far fa-file-excel mr-2"></i>CSV (Tablas)</a>
+            <a class="dropdown-item" href="#" id="expWord"><i class="far fa-file-word mr-2"></i>Word (Informe)</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="content">
+  <div class="container-fluid">
+
+    <!-- KPI CARDS -->
+    <div class="row">
+      <div class="col-md-4">
+        <div class="info-box kpi">
+          <span class="info-box-icon bg-success"><i class="fas fa-dollar-sign"></i></span>
+          <div class="info-box-content">
+            <span class="info-box-text">Ingresos del mes</span>
+            <span class="info-box-number" id="kpiIngresos">$0</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="info-box kpi">
+          <span class="info-box-icon bg-primary"><i class="fas fa-user-check"></i></span>
+          <div class="info-box-content">
+            <span class="info-box-text">Asistencia promedio</span>
+            <span class="info-box-number" id="kpiAsistencia">0%</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="info-box kpi">
+          <span class="info-box-icon bg-warning"><i class="fas fa-users"></i></span>
+          <div class="info-box-content">
+            <span class="info-box-text">Alumnos activos</span>
+            <span class="info-box-number" id="kpiActivos">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="row">
+      <div class="col-lg-7">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title mb-0"><i class="fas fa-chart-bar mr-2"></i>Ingresos por mes</h3>
+          </div>
+          <div class="card-body chart-wrapper">
+            <canvas id="chartIngresos"></canvas>
+            <small class="text-muted">Comparativo del año seleccionado vs. año anterior.</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title mb-0"><i class="fas fa-clock mr-2"></i>Top 5 horarios con mayor demanda</h3>
+          </div>
+          <div class="card-body chart-wrapper">
+            <canvas id="chartHorarios"></canvas>
+            <small class="text-muted">Agrupado por franja horaria (ej. 08:00, 18:00) en el mes seleccionado.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLAS -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title mb-0"><i class="fas fa-clipboard-list mr-2"></i>Asistencia por sesión (binaria)</h3>
+      </div>
+      <div class="card-body">
+        <table id="dtAsistencia" class="table table-striped table-bordered table-sm w-100"></table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- JS: jQuery + Bootstrap + AdminLTE -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+<!-- DataTables -->
+<script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.8/js/jquery.dataTables.min.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<!-- Export: jsPDF + autotable + docx -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+
+<script>
+/* ==============================
+   MOCK DATA (en memoria)
+================================*/
+const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const hoy = new Date();
+const ANIO_ACTUAL = hoy.getFullYear();
+const ANIO_ANT = ANIO_ACTUAL - 1;
+const grupos = [
+  {id:'CHN_A1_M1', nombre:'Chino A1-M1', cupo:12},
+  {id:'CHN_A2_T1', nombre:'Chino A2-T1', cupo:15},
+  {id:'CHN_B1_V1', nombre:'Chino B1-V1', cupo:10},
+  {id:'CHN_B2_N1', nombre:'Chino B2-N1', cupo:10},
+  {id:'CHN_C1_S',  nombre:'Chino C1-S',  cupo:10},
+];
+
+// Ingresos por mes (año actual y anterior)
+const ingresos = {
+  [ANIO_ACTUAL]: meses.map(()=> rnd(45000, 90000)),
+  [ANIO_ANT]:    meses.map(()=> rnd(40000, 80000)),
+};
+
+// Alumnos (activos/inactivos/baja) - demo simple
+const alumnos = Array.from({length:220}).map((_,i)=> ({
+  id: i+1,
+  nombre: 'Alumno '+(i+1),
+  estatus: (i%20===0)?'BAJA': ((i%8===0)?'INACTIVO':'ACTIVO')
+}));
+
+// Asistencia por sesión (binaria) para el mes seleccionado
+function generarAsistencia(mesIndex, anio){
+  const sesiones = [];
+  // por simplicidad: 12 sesiones en el mes (3 por semana)
+  for(let i=1;i<=12;i++){
+    const g = grupos[rnd(0,grupos.length-1)];
+    const fecha = new Date(anio, mesIndex, rnd(1,28));
+    const hora = ['08:00','09:00','18:00','20:00'][rnd(0,3)];
+    const activosGrupo = rnd(8, g.cupo);
+    const presentes = rnd(Math.floor(activosGrupo*0.6), activosGrupo); // 60%-100%
+    sesiones.push({
+      fecha: fecha.toISOString().slice(0,10),
+      grupo: g.id,
+      grupoNombre: g.nombre,
+      hora,
+      activos: activosGrupo,
+      presentes,
+      ausentes: activosGrupo - presentes
+    });
+  }
+  return sesiones;
+}
+
+// Demanda por horario (en base a las sesiones generadas)
+function demandaPorHorario(sesiones){
+  const map = {};
+  sesiones.forEach(s=>{
+    map[s.hora] = map[s.hora] || {hora:s.hora, total:0, sesiones:0};
+    map[s.hora].total += s.presentes;
+    map[s.hora].sesiones += 1;
+  });
+  const arr = Object.values(map).map(x=>({hora:x.hora, demanda: Math.round(x.total/x.sesiones)}));
+  arr.sort((a,b)=> b.demanda - a.demanda);
+  return arr;
+}
+
+/* ==============================
+   CONTROLES / ESTADO
+================================*/
+const $mes = $('#selMes');
+const $anio = $('#selAnio');
+const $grupo = $('#selGrupo');
+const $estatus = $('#selEstatus');
+let dtAsistencia;
+let chartIngresos, chartHorarios;
+let sesionesMes = []; // dataset actual
+
+$(function(){
+  // meses y años
+  meses.forEach((m,i)=> $mes.append(`<option value="${i}">${m}</option>`));
+  $anio.append(`<option>${ANIO_ACTUAL}</option>`);
+  $anio.append(`<option>${ANIO_ANT}</option>`);
+  $mes.val(hoy.getMonth()); $anio.val(ANIO_ACTUAL);
+
+  // grupos
+  grupos.forEach(g=> $grupo.append(`<option value="${g.id}">${g.nombre}</option>`));
+
+  // render inicial
+  renderAll();
+
+  // eventos
+  $mes.on('change', renderAll);
+  $anio.on('change', renderAll);
+  $grupo.on('change', applyFilters);
+  $estatus.on('change', applyFilters);
+
+  // export
+  $('#expPdf').on('click', exportPDF);
+  $('#expCsv').on('click', exportCSV);
+  $('#expWord').on('click', exportWord);
+});
+
+/* ==============================
+   RENDER GENERAL
+================================*/
+function renderAll(){
+  const mi = +$mes.val(); const anio = +$anio.val();
+  sesionesMes = generarAsistencia(mi, anio);
+  renderKPIs(mi, anio);
+  renderIngresosChart(anio);
+  renderHorariosChart(mi, anio);
+  renderAsistenciaTable(sesionesMes);
+}
+
+/* KPIs */
+function renderKPIs(mi, anio){
+  const totalMes = ingresos[anio][mi];
+  $('#kpiIngresos').text(formatoMoneda(totalMes));
+
+  // asistencia promedio del mes (promedio de presentes/activos por sesión)
+  const avgAsist = sesionesMes.length ? Math.round(100 * sesionesMes.reduce((acc,s)=> acc + (s.presentes/s.activos),0)/sesionesMes.length) : 0;
+  $('#kpiAsistencia').text(avgAsist+'%');
+
+  const activos = alumnos.filter(a=>a.estatus==='ACTIVO').length;
+  $('#kpiActivos').text(activos);
+}
+
+/* Base de opciones para evitar re-render infinito por resize */
+const BASE_CHART_OPTS = {
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: false,          // desactiva animaciones
+  resizeDelay: 250,          // debouncer de resize
+  plugins: { legend: { display: true } },
+};
+
+/* Chart: Ingresos por mes */
+function renderIngresosChart(anio){
+  const ctx = document.getElementById('chartIngresos');
+  const data = {
+    labels: meses,
+    datasets: [
+      { label: 'Año '+anio, data: ingresos[anio], borderWidth: 1 },
+      { label: 'Año '+(anio-1), data: ingresos[anio-1], borderWidth: 1 }
+    ]
+  };
+  const opts = {
+    ...BASE_CHART_OPTS,
+    scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'$'+abrevia(v) } } }
+  };
+  if(chartIngresos){ chartIngresos.destroy(); }
+  chartIngresos = new Chart(ctx, { type:'bar', data, options:opts });
+}
+
+/* Chart: Top horarios con mayor demanda */
+function renderHorariosChart(mi, anio){
+  const top = demandaPorHorario(sesionesMes).slice(0,5);
+  const ctx = document.getElementById('chartHorarios');
+  const data = { labels: top.map(t=>t.hora), datasets:[{ label:'Demanda (promedio de presentes)', data: top.map(t=>t.demanda) }] };
+  const opts = { ...BASE_CHART_OPTS, scales:{ y:{ beginAtZero:true } } };
+  if(chartHorarios){ chartHorarios.destroy(); }
+  chartHorarios = new Chart(ctx, { type:'bar', data, options:opts });
+}
+
+/* Tabla: Asistencia por sesión */
+function renderAsistenciaTable(rows){
+  if(dtAsistencia){ dtAsistencia.destroy(); $('#dtAsistencia').empty(); }
+  dtAsistencia = $('#dtAsistencia').DataTable({
+    language:{url:'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json'},
+    data: rows, pageLength: 10, dom:'tip',
+    columns:[
+      {title:'Fecha', data:'fecha'},
+      {title:'Grupo', data:'grupoNombre'},
+      {title:'Hora', data:'hora'},
+      {title:'Activos', data:'activos'},
+      {title:'Presentes', data:'presentes'},
+      {title:'Ausentes', data:'ausentes'},
+      {title:'Asistencia %', data:null, render:r=> Math.round(100*r.presentes/r.activos)+'%' }
+    ]
+  });
+}
+
+/* Filtros secundarios (grupo/estatus) */
+function applyFilters(){
+  const g = $grupo.val();
+  // En demo, estatus no afecta las sesiones (no hay granularidad por alumno aún).
+  const filtered = sesionesMes.filter(s => !g || s.grupo===g);
+  renderAsistenciaTable(filtered);
+}
+
+/* ==============================
+   EXPORTES
+================================*/
+function exportPDF(e){
+  e?.preventDefault?.();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'p', unit:'pt', format:'a4' });
+  doc.setFontSize(16);
+  doc.text('Reporte — '+meses[+$mes.val()]+' '+$anio.val(), 40, 50);
+  doc.setFontSize(11);
+  doc.text('Ingresos del mes: '+$('#kpiIngresos').text(), 40, 75);
+  doc.text('Asistencia promedio: '+$('#kpiAsistencia').text(), 40, 92);
+  doc.text('Alumnos activos: '+$('#kpiActivos').text(), 40, 109);
+  doc.text('Top horarios con mayor demanda (promedio de presentes):', 40, 136);
+
+  // Tabla horarios
+  const top = demandaPorHorario(sesionesMes).slice(0,5).map(t=>[t.hora, t.demanda]);
+  doc.autoTable({ head:[['Horario','Demanda']], body: top, startY: 150 });
+
+  // Tabla asistencia (resumen)
+  const rows = sesionesMes.slice(0,10).map(s=>[s.fecha, s.grupoNombre, s.hora, s.activos, s.presentes, s.ausentes]);
+  doc.autoTable({ head:[['Fecha','Grupo','Hora','Activos','Presentes','Ausentes']], body: rows, startY: doc.previousAutoTable.finalY + 20 });
+  doc.save('reporte_'+$anio.val()+'_'+(+$mes.val()+1)+'.pdf');
+}
+
+function exportCSV(e){
+  e?.preventDefault?.();
+  // Solo exporto tabla asistencia + top horarios
+  const sep = ',';
+  let csv = 'Asistencia por sesión\n';
+  csv += ['Fecha','Grupo','Hora','Activos','Presentes','Ausentes','Asistencia %'].join(sep)+'\n';
+  sesionesMes.forEach(s=>{
+    csv += [s.fecha, s.grupoNombre, s.hora, s.activos, s.presentes, s.ausentes, Math.round(100*s.presentes/s.activos)+'%'].join(sep)+'\n';
+  });
+  csv += '\nTop horarios (promedio de presentes)\nHorario,Demanda\n';
+  demandaPorHorario(sesionesMes).slice(0,5).forEach(t=>{
+    csv += [t.hora, t.demanda].join(sep)+'\n';
+  });
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='reporte_'+$anio.val()+'_'+(+$mes.val()+1)+'.csv'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+async function exportWord(e){
+  e?.preventDefault?.();
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel } = window.docx;
+  const doc = new Document({ sections:[{ children:[
+    new Paragraph({ text:'Informe — '+meses[+$mes.val()]+' '+$anio.val(), heading:HeadingLevel.TITLE }),
+    new Paragraph('Ingresos del mes: '+$('#kpiIngresos').text()),
+    new Paragraph('Asistencia promedio: '+$('#kpiAsistencia').text()),
+    new Paragraph('Alumnos activos: '+$('#kpiActivos').text()),
+    new Paragraph(''),
+    new Paragraph({ text:'Top horarios con mayor demanda', heading:HeadingLevel.HEADING_2 }),
+    ...demandaPorHorario(sesionesMes).slice(0,5).map(t=> new Paragraph('- '+t.hora+': '+t.demanda)),
+    new Paragraph(''),
+    new Paragraph({ text:'Asistencia por sesión (resumen)', heading:HeadingLevel.HEADING_2 }),
+    ...sesionesMes.slice(0,10).map(s=> new Paragraph(`${s.fecha} — ${s.grupoNombre} — ${s.hora} — ${s.presentes}/${s.activos} (${Math.round(100*s.presentes/s.activos)}%)`))
+  ]}] });
+  const blob = await Packer.toBlob(doc);
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='informe_'+$anio.val()+'_'+(+$mes.val()+1)+'.docx'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ==============================
+   UTILS
+================================*/
+function rnd(min, max){
+  if(typeof min==='number' && typeof max==='number'){
+    return Math.floor(Math.random()*(max-min+1))+min;
+  }
+  return Math.floor(Math.random()*(max-min+1))+min;
+}
+function abrevia(n){
+  if(n>=1e6) return (n/1e6).toFixed(1)+'M';
+  if(n>=1e3) return (n/1e3).toFixed(1)+'k';
+  return n;
+}
+function formatoMoneda(n){
+  return n.toLocaleString('es-MX',{ style:'currency', currency:'MXN' });
+}
+</script>
+
+</body>
+</html>

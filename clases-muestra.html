@@ -1,15 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Clases Muestra</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<div class="wrapper hold-transition sidebar-mini">
+  <!-- CSS (CDN) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap4.min.css">
+</head>
+<body class="hold-transition sidebar-mini">
+
+<div class="wrapper">
   <section class="content p-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h2 class="mb-0">Clases Muestra</h2>
-      <button class="btn btn-primary" onclick="$('#main-content').load('agendar-clase-muestra.html')">
+      <!-- Navega a la página completa dentro del mismo iframe -->
+      <button class="btn btn-primary" onclick="window.location.href='agendar-clase-muestra.html'">
         <i class="fas fa-plus"></i> Agendar Nueva Clase Muestra
       </button>
     </div>
+
     <div class="table-responsive">
-      <table id="tablaClasesMuestra" class="table table-bordered table-striped">
-        <thead>
+      <table id="tablaClasesMuestra" class="table table-bordered table-striped w-100">
+        <thead class="thead-light">
           <tr>
             <th>Alumno</th>
             <th>Fecha</th>
@@ -17,7 +33,7 @@
             <th>Profesor</th>
             <th>Idioma</th>
             <th>Estatus</th>
-            <th>Acciones</th>
+            <th style="width:130px;">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -28,15 +44,15 @@
             <td>María Torres</td>
             <td>Inglés</td>
             <td><span class="badge badge-warning">Pendiente</span></td>
-            <td>
-              <button class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#modalActualizarEstatus">
-                <i class="fas fa-sync-alt" title="Actualizar estatus"></i>
+            <td class="text-nowrap">
+              <button class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#modalActualizarEstatus" title="Actualizar estatus">
+                <i class="fas fa-sync-alt"></i>
               </button>
-              <button class="btn btn-sm btn-outline-info">
-                <i class="fas fa-eye" title="Ver detalles"></i>
+              <button class="btn btn-sm btn-outline-info" title="Ver detalles">
+                <i class="fas fa-eye"></i>
               </button>
-              <button class="btn btn-sm btn-outline-danger">
-                <i class="fas fa-trash" title="Eliminar clase"></i>
+              <button class="btn btn-sm btn-outline-danger" title="Eliminar clase" onclick="eliminarFila(this)">
+                <i class="fas fa-trash"></i>
               </button>
             </td>
           </tr>
@@ -47,39 +63,75 @@
 
   <!-- Modal actualizar estatus -->
   <div class="modal fade" id="modalActualizarEstatus" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Actualizar Estatus</h5>
-          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-        </div>
-        <div class="modal-body">
-          <form>
-            <div class="form-group">
-              <label>Nuevo estatus</label>
-              <select class="form-control" required>
-                <option>Clase Reagendada</option>
-                <option>Clase No Tomada</option>
-                <option>Clase Realizada</option>
-                <option>Declinada</option>
-                <option>Inscripción Finalizada</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Comentarios</label>
-              <textarea class="form-control" rows="3"></textarea>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-primary">Guardar Cambios</button>
-        </div>
+    <div class="modal-dialog" role="document"><div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Actualizar Estatus</h5>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
       </div>
-    </div>
+      <div class="modal-body">
+        <form id="formEstatus">
+          <div class="form-group">
+            <label>Nuevo estatus</label>
+            <select id="selEstatus" class="form-control" required>
+              <option>Clase Reagendada</option>
+              <option>Clase No Tomada</option>
+              <option>Clase Realizada</option>
+              <option>Declinada</option>
+              <option>Inscripción Finalizada</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Comentarios</label>
+            <textarea id="txtComentarios" class="form-control" rows="3"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="btnGuardarEstatus">Guardar Cambios</button>
+      </div>
+    </div></div>
   </div>
 </div>
+
+<!-- JS (CDN) - ORDEN UNIFICADO -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+
 <script>
-  $(document).ready(function () {
-    $('#tablaClasesMuestra').DataTable();
+  // Inicializa tabla con idioma es-MX
+  $(function () {
+    $('#tablaClasesMuestra').DataTable({
+      language: { url: 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/es-MX.json' }
+    });
+
+    // Guardar cambios de estatus (demo)
+    $('#btnGuardarEstatus').on('click', function () {
+      const est = $('#selEstatus').val();
+      $('#modalActualizarEstatus').modal('hide');
+      Swal.fire('Actualizado', 'Estatus cambiado a: <b>'+est+'</b>', 'success');
+    });
   });
+
+  // Eliminar fila (demo)
+  function eliminarFila(btn) {
+    Swal.fire({
+      icon:'warning',
+      title:'Eliminar clase',
+      text:'Esta acción no se puede deshacer.',
+      showCancelButton:true,
+      confirmButtonText:'Eliminar'
+    }).then(r=>{
+      if(!r.isConfirmed) return;
+      const tr = btn.closest('tr');
+      const table = $('#tablaClasesMuestra').DataTable();
+      table.row(tr).remove().draw(false);
+      Swal.fire('Eliminada','','success');
+    });
+  }
 </script>
+</body>
+</html>
